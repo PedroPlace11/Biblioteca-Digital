@@ -65,7 +65,7 @@ class RequisicaoController extends Controller
             $query->orderBy('nome', $sortOrder);
         }
 
-        $livros = $query->get();
+        $livros = $query->paginate(10);
 
         $autores = Autor::orderBy('nome')->get(['id', 'nome']);
         $editoras = Editora::orderBy('nome')->get(['id', 'nome']);

@@ -65,6 +65,7 @@
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             {{-- Itera sobre cada editora e exibe suas informações --}}
+
                             @foreach ($editoras as $editora)
                                 <tr class="hover:bg-gray-50 transition">
                                     {{-- Logotipo da editora ou inicial do nome se não houver logotipo --}}
@@ -115,6 +116,23 @@
             <div class="text-center py-8 bg-white rounded-xl border border-gray-100">
                 <p class="text-gray-500 text-lg">Nenhuma editora encontrada.</p>
             </div>
+        @endif
+        {{-- Paginação customizada --}}
+        @if ($editoras->hasPages())
+        <div class="pagination-custom mt-6">
+            <div class="join grid grid-cols-2 w-56 mx-auto">
+                @if ($editoras->onFirstPage())
+                    <button class="join-item btn bg-black text-white font-semibold w-full py-1 px-2 text-sm" disabled>Página anterior</button>
+                @else
+                    <a href="{{ $editoras->previousPageUrl() }}" class="join-item btn bg-black text-white font-semibold w-full py-1 px-2 text-sm">Página anterior</a>
+                @endif
+                @if ($editoras->hasMorePages())
+                    <a href="{{ $editoras->nextPageUrl() }}" class="join-item btn btn-outline font-semibold w-full py-1 px-2 text-sm">Próxima página</a>
+                @else
+                    <button class="join-item btn btn-outline font-semibold w-full py-1 px-2 text-sm" disabled>Próxima página</button>
+                @endif
+            </div>
+        </div>
         @endif
     </div>
 </x-app-layout>

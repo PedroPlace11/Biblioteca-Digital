@@ -21,7 +21,7 @@ class EditoraController extends Controller
         }
 
         $query->orderBy('nome', $sortOrder);
-        $editoras = $query->get();
+        $editoras = $query->paginate(10);
         return view('editoras.index', compact('editoras', 'search', 'sortOrder'));
     }
 

@@ -19,7 +19,7 @@ class AutorController extends Controller
         }
 
         $query->orderBy('nome', $sortOrder);
-        $autores = $query->get();
+        $autores = $query->paginate(10);
         return view('autores.index', compact('autores', 'search', 'sortOrder'));
     }
 

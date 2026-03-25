@@ -204,9 +204,20 @@
                 </div>
 
                 @if (method_exists($todasRequisicoes, 'links'))
-                    {{-- Paginação só aparece quando a coleção suporta links. --}}
-                    <div class="mt-4">
-                        {{ $todasRequisicoes->links() }}
+                    {{-- Paginação customizada --}}
+                    <div class="pagination-custom mt-6">
+                        <div class="join grid grid-cols-2 w-80 mx-auto">
+                            @if ($todasRequisicoes->onFirstPage())
+                                <button class="join-item btn bg-black text-white font-semibold w-full py-1 px-2 text-sm" disabled>Página anterior</button>
+                            @else
+                                <a href="{{ $todasRequisicoes->previousPageUrl() }}" class="join-item btn bg-black text-white font-semibold w-full py-1 px-2 text-sm">Página anterior</a>
+                            @endif
+                            @if ($todasRequisicoes->hasMorePages())
+                                <a href="{{ $todasRequisicoes->nextPageUrl() }}" class="join-item btn btn-outline font-semibold w-full py-1 px-2 text-sm">Próxima página</a>
+                            @else
+                                <button class="join-item btn btn-outline font-semibold w-full py-1 px-2 text-sm" disabled>Próxima página</button>
+                            @endif
+                        </div>
                     </div>
                 @endif
             @else

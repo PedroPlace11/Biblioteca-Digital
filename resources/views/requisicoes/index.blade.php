@@ -168,7 +168,7 @@
                                     </td>
                                     {{-- Coluna de ação para ver detalhes do livro --}}
                                     <td class="py-3">
-                                        <a href="{{ route('livros.show', $livro->id) }}" class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver Livro</a>
+                                         <a href="{{ route('livros.show', $livro->id) }}" class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver</a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -181,6 +181,23 @@
             <div class="text-center py-8 bg-white rounded-xl border border-gray-100">
                 <p class="text-gray-500 text-lg">Nenhum livro encontrado.</p>
             </div>
+        @endif
+        {{-- Paginação customizada --}}
+        @if ($livros->hasPages())
+        <div class="pagination-custom mt-6">
+            <div class="join grid grid-cols-2 w-56 mx-auto">
+                @if ($livros->onFirstPage())
+                    <button class="join-item btn bg-black text-white font-semibold w-full py-1 px-2 text-sm" disabled>Página anterior</button>
+                @else
+                    <a href="{{ $livros->previousPageUrl() }}" class="join-item btn bg-black text-white font-semibold w-full py-1 px-2 text-sm">Página anterior</a>
+                @endif
+                @if ($livros->hasMorePages())
+                    <a href="{{ $livros->nextPageUrl() }}" class="join-item btn btn-outline font-semibold w-full py-1 px-2 text-sm">Próxima página</a>
+                @else
+                    <button class="join-item btn btn-outline font-semibold w-full py-1 px-2 text-sm" disabled>Próxima página</button>
+                @endif
+            </div>
+        </div>
         @endif
     </div>
 </x-app-layout>

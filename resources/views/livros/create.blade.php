@@ -121,14 +121,10 @@
                             <span class="label-text font-semibold">Autores</span>
                             <span class="label-text-alt text-base-content/60">Pode selecionar vários</span>
                         </label>
-                        <select
-                            name="autores[]"
-                            multiple
-                            class="select select-bordered w-full min-h-48 @error('autores') select-error @enderror">
+                        <select name="autor_id" class="select select-bordered w-full @error('autores') select-error @enderror">
+                            <option disabled selected>Selecione um autor</option>
                             @foreach($autores as $autor)
-                                <option value="{{ $autor->id }}" {{ collect(old('autores', []))->contains($autor->id) ? 'selected' : '' }}>
-                                    {{ $autor->nome }}
-                                </option>
+                                <option value="{{ $autor->id }}" {{ old('autor_id') == $autor->id ? 'selected' : '' }}>{{ $autor->nome }}</option>
                             @endforeach
                         </select>
                         @error('autores')

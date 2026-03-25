@@ -17,10 +17,79 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\GoogleBooksService;
 
 // Controlador responsavel pelas operacoes CRUD de livros e exportacao.
 class LivroController extends Controller
 {
+    // Pesquisa livros na Google Books API
+    public function pesquisarGoogleBooks(Request $request, GoogleBooksService $googleBooksService)
+    {
+        $query = $request->input('q');
+        $resultados = [];
+        $nenhumResultado = false;
+        if ($query) {
+            $resultados = $googleBooksService->searchBooks($query);
+            $nenhumResultado = empty($resultados);
+        }
+        // Mapeia para formato simplificado para exibir na view
+        $livros = array_map(fn($item) => $googleBooksService->mapToLivro($item), $resultados);
+
+        // Últimos livros adicionados localmente
+        $ultimosLivros = \App\Models\Livro::with('autores')->latest()->take(5)->get();
+
+        return view('livros.googlebooks', [
+            'livros' => $livros,
+            'query' => $query,
+            'resultados' => $resultados,
+            'nenhumResultado' => $nenhumResultado,
+            'ultimosLivros' => $ultimosLivros,
+        ]);
+    }
+
+    // Salva um livro pesquisado da Google Books na base local
+    public function salvarGoogleBook(Request $request, GoogleBooksService $googleBooksService)
+    {
+        $data = $request->validate([
+            'isbn' => 'required|string|max:20',
+            'titulo' => 'required',
+            'editora' => 'nullable|string',
+            'autores' => 'nullable|string',
+            'ano' => 'nullable|string',
+            'descricao' => 'nullable|string',
+            'capa_url' => 'nullable|url',
+            'preco' => 'nullable|numeric',
+        ]);
+
+        // Editora
+        $editora = null;
+        if (!empty($data['editora'])) {
+            $editora = Editora::firstOrCreate(['nome' => $data['editora']]);
+        }
+
+        // Livro
+        $livro = Livro::create([
+            'isbn' => $data['isbn'],
+            'nome' => $data['titulo'],
+            'editora_id' => $editora ? $editora->id : null,
+            'bibliografia' => $data['descricao'] ?? null,
+            'imagem_capa' => $data['capa_url'] ?? null,
+            'preco' => isset($data['preco']) ? $data['preco'] : 0,
+        ]);
+
+        // Autores
+        if (!empty($data['autores'])) {
+            $nomesAutores = array_map('trim', explode(',', $data['autores']));
+            $idsAutores = [];
+            foreach ($nomesAutores as $nomeAutor) {
+                $autor = Autor::firstOrCreate(['nome' => $nomeAutor]);
+                $idsAutores[] = $autor->id;
+            }
+            $livro->autores()->sync($idsAutores);
+        }
+
+        return redirect()->route('livros.show', $livro->id)->with('popup_success', 'Livro importado com sucesso!');
+    }
     // Exporta os livros para um ficheiro Excel.
     public function export()
     {
@@ -299,7 +368,7 @@ class LivroController extends Controller
             $query->orderBy('nome', $sortOrder);
         }
 
-        $livros = $query->get();
+        $livros = $query->paginate(10)->withQueryString();
         $livrosRequisitadosIds = [];
 
         if (Auth::check()) {
@@ -414,13 +483,23 @@ class LivroController extends Controller
     // Remove os vinculos de autores e depois exclui o livro.
     public function destroy(Livro $livro)
     {
+        $editoraId = $livro->editora_id;
         $livro->autores()->detach();
         $livro->delete();
+
+        // Se a editora não tiver mais livros, apaga a editora
+        if ($editoraId) {
+            $temLivros = \App\Models\Livro::where('editora_id', $editoraId)->exists();
+            if (!$temLivros) {
+                \App\Models\Editora::where('id', $editoraId)->delete();
+            }
+        }
 
         return redirect()->route('livros.index');
     }
 
 }
+// Fim do LivroController
 
 
 

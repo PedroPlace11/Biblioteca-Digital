@@ -66,6 +66,7 @@
             <div class="flex flex-wrap gap-2 mb-6">
                 <a href="{{ route('livros.create') }}" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white">Novo Livro</a>
                 <a href="{{ route('livros.export') }}" class="btn btn-outline">Exportar para Excel</a>
+                <a href="{{ route('livros.googlebooks') }}" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white">Buscar na Google Books</a>
             </div>
         @endif
 
@@ -122,6 +123,7 @@
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             {{-- Itera sobre cada livro e exibe suas informações --}}
+
                             @foreach ($livros as $livro)
                                 @php
                                     $indisponivel = ($livro->requisicoes_count ?? 0) > 0;
@@ -171,13 +173,15 @@
                                     {{-- Ações disponíveis para o livro: ver, requisitar, entrar --}}
                                     <td class="py-3">
                                         <div class="flex flex-wrap items-center gap-2">
-                                            <a href="{{ route('livros.show', $livro->id) }}" class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver Livro</a>
-                                            @if (auth()->check() && !$indisponivel)
-                                                <form action="{{ route('livros.requisitar', $livro->id) }}" method="POST">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-outline">Requisitar</button>
-                                                </form>
-                                            @endif
+                                            <div class="flex flex-row gap-2">
+                                                <a href="{{ route('livros.show', $livro->id) }}" class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver</a>
+                                                @if (auth()->check() && !$indisponivel)
+                                                    <form action="{{ route('livros.requisitar', $livro->id) }}" method="POST">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-outline">Requisitar</button>
+                                                    </form>
+                                                @endif
+                                            </div>
                                             @guest
                                                 <a href="{{ route('login') }}" class="btn btn-sm btn-outline">Entrar</a>
                                             @endguest
@@ -187,6 +191,24 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+                {{-- Paginação --}}
+                <div class="pagination-custom mt-6">
+                    <div class="join grid grid-cols-2 w-56 mx-auto">
+                        {{-- Botão página anterior --}}
+                        @if ($livros->onFirstPage())
+                            <button class="join-item btn bg-black text-white font-semibold w-full py-1 px-2 text-sm" disabled>Página anterior</button>
+                        @else
+                            <a href="{{ $livros->previousPageUrl() }}" class="join-item btn bg-black text-white font-semibold w-full py-1 px-2 text-sm">Página anterior</a>
+                        @endif
+
+                        {{-- Botão próxima página --}}
+                        @if ($livros->hasMorePages())
+                            <a href="{{ $livros->nextPageUrl() }}" class="join-item btn btn-outline font-semibold w-full py-1 px-2 text-sm">Próxima página</a>
+                        @else
+                            <button class="join-item btn btn-outline font-semibold w-full py-1 px-2 text-sm" disabled>Próxima página</button>
+                        @endif
+                    </div>
                 </div>
             </div>
         {{-- Caso não haja livros, exibe mensagem amigável --}}

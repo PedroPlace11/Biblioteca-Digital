@@ -116,7 +116,7 @@ Route::middleware([
             $totalMinhasRequisicoesAdmin = $minhasRequisicoesAdmin->count();
             $totalMinhasRequisicoesAdminAtivas = $minhasRequisicoesAdmin->whereNull('deleted_at')->count();
             $totalMinhasRequisicoesAdminEncerradas = $minhasRequisicoesAdmin->whereNotNull('deleted_at')->count();
-            $livrosPorEditora = Editora::withCount('livros')->get();
+            $livrosPorEditora = Editora::has('livros')->withCount('livros')->get();
             $topAutores = Autor::withCount('livros')
                 ->orderBy('livros_count', 'desc')
                 ->take(5)
@@ -205,6 +205,10 @@ Route::middleware(['auth'])->group(function () {
             'last_update_ts' => $lastUpdateTs ? strtotime((string) $lastUpdateTs) : 0,
         ]);
     })->name('requisicoes.last-update');
+    Route::get('/livros/{livro}/requisitar', function($livro) {
+        return redirect()->route('livros.show', $livro)
+            ->with('error', 'Para requisitar um livro, utilize o botão apropriado na lista de livros.');
+    });
     Route::post('/livros/{livro}/requisitar', [LivroController::class, 'requisitar'])->name('livros.requisitar');
     Route::delete('/livros/{livro}/requisitar', [LivroController::class, 'cancelarRequisicao'])->name('livros.cancelar-requisicao');
     Route::post('/notificacoes/{notification}/lida', [NotificationController::class, 'markAsRead'])->name('notifications.read');
@@ -212,14 +216,19 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Rotas públicas de catálogo.
+
+// Pesquisa Google Books
+Route::get('/livros/googlebooks', [LivroController::class, 'pesquisarGoogleBooks'])->name('livros.googlebooks');
+Route::post('/livros/googlebooks/salvar', [LivroController::class, 'salvarGoogleBook'])->name('livros.googlebooks.salvar');
+
 Route::get('/livros', [LivroController::class, 'index'])->name('livros.index');
-Route::get('/livros/{livro}', [LivroController::class, 'show'])->name('livros.show');
+Route::get('/livros/{livro}', [LivroController::class, 'show'])->name('livros.show')->where('livro', '[A-Za-z0-9]+');
 
 Route::get('/autores', [AutorController::class, 'index'])->name('autores.index');
-Route::get('/autores/{autor}', [AutorController::class, 'show'])->name('autores.show');
+Route::get('/autores/{autor}', [AutorController::class, 'show'])->name('autores.show')->where('autor', '[A-Za-z0-9]+');
 
 Route::get('/editoras', [EditoraController::class, 'index'])->name('editoras.index');
-Route::get('/editoras/{editora}', [EditoraController::class, 'show'])->name('editoras.show');
+Route::get('/editoras/{editora}', [EditoraController::class, 'show'])->name('editoras.show')->where('editora', '[A-Za-z0-9]+');
 
 // Autenticação unificada em vista combinada.
 Route::get('/login', function () {
