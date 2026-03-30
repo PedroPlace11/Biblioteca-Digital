@@ -285,6 +285,52 @@
             @endif
         </div>
         @endauth
+
+        {{-- Seção de reviews ativos do livro --}}
+        @if(isset($reviewsAtivos) && $reviewsAtivos->count())
+            <div class="mt-10">
+                <h2 class="text-2xl font-semibold mb-4">Reviews dos Leitores</h2>
+                <div class="space-y-4">
+                    @foreach($reviewsAtivos as $review)
+                        <div class="card bg-base-100 shadow">
+                            <div class="card-body p-4">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <img src="{{ $review->user->profile_photo_url ?? '' }}" alt="{{ $review->user->name }}" class="w-10 h-10 rounded-full object-cover border border-base-300">
+                                    <span class="font-semibold">{{ $review->user->name }}</span>
+                                    @if(isset($review->rating))
+                                        <div class="ml-4 flex items-center">
+                                            <div class="rating rating-sm">
+                                                @for ($i = 1; $i <= 5; $i++)
+                                                    <input type="radio" class="mask mask-star-2 bg-warning" disabled {{ $review->rating == $i ? 'checked' : '' }} />
+                                                @endfor
+                                            </div>
+                                            <span class="ml-2 text-xs text-gray-500">{{ $review->rating }}/5</span>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="text-gray-800">{{ $review->conteudo }}</div>
+                                <div class="text-xs text-gray-500 mt-2">Submetido em {{ $review->created_at->format('d/m/Y H:i') }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        {{-- Botão para deixar review (apenas cidadão, requisição encerrada e sem review) --}}
+        @auth
+            @php
+                $jaDevolveu = $minhaRequisicaoAtiva === null && isset($historicoRequisicoesPorCidadao[auth()->id()]) && $historicoRequisicoesPorCidadao[auth()->id()]->whereNotNull('deleted_at')->count() > 0;
+                $jaDeuReview = \App\Models\Review::where('user_id', auth()->id())->where('livro_id', $livro->id)->exists();
+            @endphp
+            @if(auth()->user()->role === 'cidadao' && $jaDevolveu && !$jaDeuReview)
+                <div class="my-8 flex justify-center">
+                    <a href="{{ route('reviews.create', $livro->id) }}?requisicao_id={{ optional($historicoRequisicoesPorCidadao[auth()->id()]->whereNotNull('deleted_at')->first())->id }}" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white px-6 py-2 rounded font-bold">
+                        Deixar Review
+                    </a>
+                </div>
+            @endif
+        @endauth
     </div>
 
     {{-- Script para fechar o popup de informação ao clicar em OK, fora do modal ou pressionar ESC --}}

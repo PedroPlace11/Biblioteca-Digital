@@ -69,6 +69,7 @@
             {{-- Conteúdo principal da página injetado via slot --}}
             <!-- Conteudo da Pagina -->
             <main class="pb-24 sm:pb-0 flex-1">
+                @yield('content')
                 {{ $slot }}
             </main>
 

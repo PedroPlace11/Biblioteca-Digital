@@ -451,7 +451,14 @@ class LivroController extends Controller
             ->get()
             ->groupBy('user_id');
 
-        return view('livros.show', compact('livro', 'livroIndisponivel', 'requisitadoPorMim', 'minhaRequisicaoAtiva', 'historicoRequisicoesPorCidadao'));
+        // Reviews ativos deste livro
+        $reviewsAtivos = \App\Models\Review::where('livro_id', $livro->id)
+            ->where('estado', 'ativo')
+            ->with('user')
+            ->latest()
+            ->get();
+
+        return view('livros.show', compact('livro', 'livroIndisponivel', 'requisitadoPorMim', 'minhaRequisicaoAtiva', 'historicoRequisicoesPorCidadao', 'reviewsAtivos'));
     }
 
     // Atualiza os dados do livro, incluindo capa e autores vinculados.

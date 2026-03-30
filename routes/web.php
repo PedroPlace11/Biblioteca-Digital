@@ -176,6 +176,7 @@ Route::middleware([
 });
 
 // Rotas exclusivas de administração.
+use App\Http\Controllers\AdminReviewController;
 Route::middleware(['auth', 'admin'])->group(function () {
 
     Route::get('livros/export', [LivroController::class, 'export'])->name('livros.export');
@@ -190,9 +191,15 @@ Route::middleware(['auth', 'admin'])->group(function () {
         ->except(['index', 'show']);
     Route::resource('editoras', EditoraController::class)->except(['index', 'show']);
 
+    // Gestão de reviews
+    Route::get('admin/reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
+    Route::get('admin/reviews/{id}', [AdminReviewController::class, 'show'])->name('admin.reviews.show');
+    Route::patch('admin/reviews/{id}', [AdminReviewController::class, 'update'])->name('admin.reviews.update');
+
 });
 
 // Rotas autenticadas partilhadas entre admin e cidadão.
+use App\Http\Controllers\ReviewController;
 Route::middleware(['auth'])->group(function () {
     Route::get('/requisicoes', [RequisicaoController::class, 'index'])->name('requisicoes.index');
     // Endpoint de apoio ao polling da dashboard do cidadão para atualização quase em tempo real.
@@ -213,6 +220,17 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/livros/{livro}/requisitar', [LivroController::class, 'cancelarRequisicao'])->name('livros.cancelar-requisicao');
     Route::post('/notificacoes/{notification}/lida', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notificacoes/ler-todas', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+
+    // Review do cidadão após devolução
+    Route::get('/livros/{livro}/review', [ReviewController::class, 'create'])->name('reviews.create');
+    Route::post('/livros/{livro}/review', [ReviewController::class, 'store'])->name('reviews.store');
+});
+
+use App\Http\Controllers\Cidadao\ReviewController as CidadaoReviewController;
+// Rotas para reviews do cidadão (apenas aprovados e recusados)
+Route::prefix('conta')->middleware(['auth', 'verified'])->group(function () {
+    Route::get('reviews', [CidadaoReviewController::class, 'index'])->name('cidadao.reviews.index');
+    Route::get('reviews/{id}', [CidadaoReviewController::class, 'show'])->name('cidadao.reviews.show');
 });
 
 // Rotas públicas de catálogo.

@@ -22,6 +22,8 @@
 
             {{-- Navegação principal (desktop) --}}
             <div class="hidden sm:flex items-center justify-center gap-2">
+                                @auth
+                                @endauth
                 @auth
                     {{-- Link para painel do usuário --}}
                     <a href="{{ route('dashboard') }}"
@@ -182,7 +184,30 @@
                                             <div class="mt-2 flex items-center justify-between gap-2">
                                                 <form method="POST" action="{{ route('notifications.read', $notification->id) }}">
                                                     @csrf
-                                                    <input type="hidden" name="redirect_to" value="{{ $notification->data['livro_url'] ?? route('dashboard') }}">
+                                                    @php
+                                                        $isReview = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'review');
+                                                        $isConfirmacao = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'confirmação de requisição');
+                                                        $isRecepcao = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'receção confirmada');
+                                                        $isDevolucao = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'pedido de devolução');
+                                                        $reviewUrl = $notification->data['review_url'] ?? null;
+                                                        $livroUrl = $notification->data['livro_url'] ?? null;
+                                                        $adminReviewsUrl = route('admin.reviews.index');
+                                                    @endphp
+                                                    <input type="hidden" name="redirect_to" value="
+                                                        @if($isReview && Auth::user()->role === 'admin' && $reviewUrl)
+                                                            {{ $reviewUrl }}
+                                                        @elseif($isReview && Auth::user()->role === 'cidadao' && $reviewUrl)
+                                                            {{ $reviewUrl }}
+                                                        @elseif($isReview)
+                                                            {{ route('cidadao.reviews.index') }}
+                                                        @elseif($isRecepcao && $livroUrl)
+                                                            {{ $livroUrl }}
+                                                        @elseif(($isConfirmacao || $isDevolucao) && $livroUrl)
+                                                            {{ $livroUrl }}
+                                                        @else
+                                                            {{ url()->current() }}
+                                                        @endif
+                                                    ">
                                                     <button type="submit" class="text-xs font-semibold text-sky-700 hover:text-sky-800">Ver detalhes</button>
                                                 </form>
                                                 <div class="flex items-center gap-2">
@@ -240,6 +265,14 @@
                                 Gerir Conta
                             </div>
 
+
+                            {{-- Link para reviews do cidadão --}}
+                            @if (Auth::user()->role === 'cidadao')
+                                <x-dropdown-link href="{{ route('cidadao.reviews.index') }}" class="rounded-xl px-3 py-2.5 font-medium">
+                                    Meus Reviews
+                                </x-dropdown-link>
+                            @endif
+
                             {{-- Link para perfil do usuário --}}
                             <x-dropdown-link href="{{ route('profile.show') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isProfile ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
                                 Perfil
@@ -253,6 +286,10 @@
 
                                 <x-dropdown-link href="{{ route('admins.create') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isAdminsCreate ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
                                     Criar Admin
+                                </x-dropdown-link>
+
+                                <x-dropdown-link href="{{ route('admin.reviews.index') }}" class="rounded-xl px-3 py-2.5 font-medium {{ request()->routeIs('admin.reviews.*') ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
+                                    Gerir Reviews
                                 </x-dropdown-link>
                             @endif
 

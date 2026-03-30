@@ -10,6 +10,8 @@
                     Explore livros, autores e editoras disponíveis na biblioteca.
                 </p>
             </div>
+
+
             <div class="text-sm text-gray-400">
                 {{ now()->locale('pt_PT')->translatedFormat('d \d\e F \d\e Y') }}
             </div>

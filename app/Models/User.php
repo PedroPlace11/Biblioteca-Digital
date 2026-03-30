@@ -142,6 +142,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Requisicao::class);
     }
+
+    // Relação 1:N com reviews feitos pelo utilizador.
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }
 
 
