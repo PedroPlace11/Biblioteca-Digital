@@ -435,6 +435,9 @@ class LivroController extends Controller
             $requisitadoPorMim = (bool) $minhaRequisicaoAtiva;
         }
 
+        // Livros relacionados por similaridade de descrição
+        $livrosRelacionados = $livro->relacionados(4);
+
         $historicoQuery = Requisicao::withTrashed()
             ->with('user:id,name,email,profile_photo_path')
             ->where('livro_id', $livro->id);
@@ -458,7 +461,7 @@ class LivroController extends Controller
             ->latest()
             ->get();
 
-        return view('livros.show', compact('livro', 'livroIndisponivel', 'requisitadoPorMim', 'minhaRequisicaoAtiva', 'historicoRequisicoesPorCidadao', 'reviewsAtivos'));
+        return view('livros.show', compact('livro', 'livroIndisponivel', 'requisitadoPorMim', 'minhaRequisicaoAtiva', 'historicoRequisicoesPorCidadao', 'reviewsAtivos', 'livrosRelacionados'));
     }
 
     // Atualiza os dados do livro, incluindo capa e autores vinculados.

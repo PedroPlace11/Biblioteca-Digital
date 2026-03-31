@@ -406,7 +406,10 @@
                                 <tr class="{{ Auth::id() === $admin->id ? 'mg-row-current' : '' }}">
                                     <td>
                                         <div class="mg-user-cell">
-                                            <img src="{{ $admin->profile_photo_url }}" alt="{{ $admin->name }}" class="mg-avatar">
+                                            @php
+                                                $foto = $admin->profile_photo_path ? asset('storage/'.$admin->profile_photo_path) : $admin->profile_photo_url;
+                                            @endphp
+                                            <img src="{{ $foto }}" alt="{{ $admin->name }}" class="mg-avatar">
                                             <div>
                                                 <div class="mg-user-name">{{ $admin->name }}</div>
                                                 <div class="mg-user-role">Administrador</div>

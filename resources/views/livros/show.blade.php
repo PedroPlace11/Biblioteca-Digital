@@ -29,6 +29,8 @@
 
     {{-- Container principal da página de detalhes do livro --}}
     <div class="p-6 max-w-5xl mx-auto">
+                {{-- Seção de Livros Relacionados --}}
+                {{-- ...existing code... --}}
         {{-- Botão para voltar à listagem de livros --}}
         <div class="mb-6 text-left">
             <a href="{{ route('livros.index') }}" class="btn btn-outline text-xl px-4 py-2 min-h-0 h-auto leading-none" aria-label="Voltar aos Livros" title="Voltar">&larr;</a>
@@ -180,11 +182,61 @@
             </div>
         </div>
 
+
+        {{-- Seção de reviews ativos do livro --}}
+        @if(isset($reviewsAtivos) && $reviewsAtivos->count())
+            <div class="mt-10">
+                <h2 class="text-2xl font-semibold mb-4">Reviews dos Leitores</h2>
+                <div class="space-y-4">
+                    @foreach($reviewsAtivos as $review)
+                        <div class="card bg-base-100 shadow">
+                            <div class="card-body p-4">
+                                <div class="flex items-center gap-3 mb-2">
+                                    @php
+                                        $user = $review->user;
+                                        $foto = ($user && $user->profile_photo_path) ? asset('storage/'.$user->profile_photo_path) : ($user ? $user->profile_photo_url : '');
+                                    @endphp
+                                    <img src="{{ $foto }}" alt="{{ $user->name }}" class="w-10 h-10 rounded-full object-cover border border-base-300">
+                                    <span class="font-semibold">{{ $review->user->name }}</span>
+                                    @if(isset($review->rating))
+                                        <div class="ml-4 flex items-center">
+                                            <div class="rating rating-sm">
+                                                @for ($i = 1; $i <= 5; $i++)
+                                                    <input type="radio" class="mask mask-star-2 bg-warning" disabled {{ $review->rating == $i ? 'checked' : '' }} />
+                                                @endfor
+                                            </div>
+                                            <span class="ml-2 text-xs text-gray-500">{{ $review->rating }}/5</span>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="text-gray-800">{{ $review->conteudo }}</div>
+                                <div class="text-xs text-gray-500 mt-2">Submetido em {{ $review->created_at->format('d/m/Y H:i') }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        {{-- Botão para deixar review (apenas cidadão, requisição encerrada e sem review) --}}
+        @auth
+            @php
+                $temRequisicaoEncerrada = isset($historicoRequisicoesPorCidadao[auth()->id()]) && $historicoRequisicoesPorCidadao[auth()->id()]->whereNotNull('deleted_at')->count() > 0;
+                $jaDeuReview = \App\Models\Review::where('user_id', auth()->id())->where('livro_id', $livro->id)->exists();
+            @endphp
+            @if(auth()->user()->role === 'cidadao' && $temRequisicaoEncerrada && !$jaDeuReview)
+                <div class="my-8 flex justify-center">
+                    <a href="{{ route('reviews.create', $livro->id) }}?requisicao_id={{ optional($historicoRequisicoesPorCidadao[auth()->id()]->whereNotNull('deleted_at')->first())->id }}" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white px-6 py-2 rounded font-bold">
+                        Deixar Review
+                    </a>
+                </div>
+            @endif
+        @endauth
+
         {{-- Seção de histórico de requisições do livro --}}
         @auth
         <div class="mt-10">
             <h2 class="text-2xl font-semibold mb-4">Histórico</h2>
-
             @if ($historicoRequisicoesPorCidadao->isNotEmpty())
                 <div class="space-y-4">
                     @foreach ($historicoRequisicoesPorCidadao as $requisicoesDoCidadao)
@@ -196,7 +248,11 @@
                             <div class="card-body p-4">
                                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
                                     <div class="flex items-center gap-3">
-                                        <img src="{{ $requisicoesDoCidadao->first()?->cidadao_foto_url }}" alt="{{ $requisicoesDoCidadao->first()?->cidadao_nome ?? $cidadao?->name ?? 'Cidadão' }}" class="w-14 h-14 rounded-full object-cover border border-base-300 shrink-0">
+                                        @php
+                                            $user = $cidadao;
+                                            $foto = ($user && $user->profile_photo_path) ? asset('storage/'.$user->profile_photo_path) : ($user ? $user->profile_photo_url : '');
+                                        @endphp
+                                        <img src="{{ $foto }}" alt="{{ $requisicoesDoCidadao->first()?->cidadao_nome ?? $user?->name ?? 'Cidadão' }}" class="w-14 h-14 rounded-full object-cover border border-base-300 shrink-0">
                                         <div>
                                             <p class="font-semibold text-lg">{{ $requisicoesDoCidadao->first()?->cidadao_nome ?? $cidadao?->name ?? 'Cidadão removido' }}</p>
                                             <p class="text-sm opacity-70">{{ $requisicoesDoCidadao->first()?->cidadao_email ?? $cidadao?->email ?? '-' }}</p>
@@ -207,7 +263,6 @@
                                         {{ $requisicoesDoCidadao->count() }} {{ $requisicoesDoCidadao->count() === 1 ? 'requisição' : 'requisições' }}
                                     </span>
                                 </div>
-
                                 <div class="overflow-x-auto">
                                     <table class="table table-sm">
                                         <thead>
@@ -228,11 +283,9 @@
                                                 @php
                                                     $dataEncerramento = $requisicao->data_recepcao_real ?? $requisicao->deleted_at;
                                                     $diasDecorridos = $requisicao->dias_decorridos;
-
                                                     if (is_null($diasDecorridos) && $dataEncerramento && $requisicao->created_at) {
                                                         $diasDecorridos = (int) ceil(max(0, $requisicao->created_at->diffInHours($dataEncerramento) / 24));
                                                     }
-
                                                     $diasDecorridos = is_null($diasDecorridos) ? null : (int) $diasDecorridos;
                                                 @endphp
                                                 <tr>
@@ -286,52 +339,27 @@
         </div>
         @endauth
 
-        {{-- Seção de reviews ativos do livro --}}
-        @if(isset($reviewsAtivos) && $reviewsAtivos->count())
-            <div class="mt-10">
-                <h2 class="text-2xl font-semibold mb-4">Reviews dos Leitores</h2>
-                <div class="space-y-4">
-                    @foreach($reviewsAtivos as $review)
-                        <div class="card bg-base-100 shadow">
-                            <div class="card-body p-4">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <img src="{{ $review->user->profile_photo_url ?? '' }}" alt="{{ $review->user->name }}" class="w-10 h-10 rounded-full object-cover border border-base-300">
-                                    <span class="font-semibold">{{ $review->user->name }}</span>
-                                    @if(isset($review->rating))
-                                        <div class="ml-4 flex items-center">
-                                            <div class="rating rating-sm">
-                                                @for ($i = 1; $i <= 5; $i++)
-                                                    <input type="radio" class="mask mask-star-2 bg-warning" disabled {{ $review->rating == $i ? 'checked' : '' }} />
-                                                @endfor
-                                            </div>
-                                            <span class="ml-2 text-xs text-gray-500">{{ $review->rating }}/5</span>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div class="text-gray-800">{{ $review->conteudo }}</div>
-                                <div class="text-xs text-gray-500 mt-2">Submetido em {{ $review->created_at->format('d/m/Y H:i') }}</div>
+        {{-- Livros Relacionados (sem título), logo após o Histórico --}}
+        @if(isset($livrosRelacionados) && $livrosRelacionados->count())
+            <div class="mb-10 mt-10">
+                <h2 class="text-2xl font-semibold mb-4">Livros Relacionados</h2>
+                <div class="flex flex-wrap justify-center gap-6">
+                    @foreach($livrosRelacionados as $relacionado)
+                        <a href="{{ route('livros.show', $relacionado->id) }}" class="card bg-base-100 shadow hover:shadow-md transition-shadow" style="width: 220px;">
+                            <div class="card-body p-4 flex flex-col items-center">
+                                @if ($relacionado->imagem_capa)
+                                    <img src="{{ asset($relacionado->imagem_capa) }}" alt="Capa de {{ $relacionado->nome }}" class="w-24 h-36 object-cover rounded mb-2">
+                                @else
+                                    <div class="w-24 h-36 bg-base-200 rounded flex items-center justify-center text-xs opacity-70 mb-2">Sem capa</div>
+                                @endif
+                                <div class="font-semibold text-center">{{ $relacionado->nome }}</div>
+                                <div class="text-xs text-gray-500 text-center mt-1 line-clamp-2">{{ Str::limit($relacionado->bibliografia, 60) }}</div>
                             </div>
-                        </div>
+                        </a>
                     @endforeach
                 </div>
             </div>
         @endif
-
-        {{-- Botão para deixar review (apenas cidadão, requisição encerrada e sem review) --}}
-        @auth
-            @php
-                $jaDevolveu = $minhaRequisicaoAtiva === null && isset($historicoRequisicoesPorCidadao[auth()->id()]) && $historicoRequisicoesPorCidadao[auth()->id()]->whereNotNull('deleted_at')->count() > 0;
-                $jaDeuReview = \App\Models\Review::where('user_id', auth()->id())->where('livro_id', $livro->id)->exists();
-            @endphp
-            @if(auth()->user()->role === 'cidadao' && $jaDevolveu && !$jaDeuReview)
-                <div class="my-8 flex justify-center">
-                    <a href="{{ route('reviews.create', $livro->id) }}?requisicao_id={{ optional($historicoRequisicoesPorCidadao[auth()->id()]->whereNotNull('deleted_at')->first())->id }}" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white px-6 py-2 rounded font-bold">
-                        Deixar Review
-                    </a>
-                </div>
-            @endif
-        @endauth
-    </div>
 
     {{-- Script para fechar o popup de informação ao clicar em OK, fora do modal ou pressionar ESC --}}
     @if (session('popup_info'))
