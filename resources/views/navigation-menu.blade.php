@@ -245,7 +245,11 @@
                         <x-slot name="trigger">
                             @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
                                 <button class="flex text-sm rounded-full ring-2 ring-transparent hover:ring-slate-200 focus:outline-none focus:ring-slate-300 transition">
-                                    <img class="size-8 rounded-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" />
+                                    @if (Auth::user()->profile_photo_path)
+                                        <img class="size-8 rounded-full object-cover" src="{{ asset('storage/'.Auth::user()->profile_photo_path) }}" alt="{{ Auth::user()->name }}" />
+                                    @else
+                                        <img class="size-8 rounded-full object-cover" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" />
+                                    @endif
                                 </button>
                             @else
                                 <span class="inline-flex rounded-md">
@@ -266,17 +270,18 @@
                             </div>
 
 
+
+                            {{-- Link para perfil do usuário --}}
+                            <x-dropdown-link href="{{ route('profile.show') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isProfile ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
+                                Perfil
+                            </x-dropdown-link>
+
                             {{-- Link para reviews do cidadão --}}
                             @if (Auth::user()->role === 'cidadao')
                                 <x-dropdown-link href="{{ route('cidadao.reviews.index') }}" class="rounded-xl px-3 py-2.5 font-medium">
                                     Meus Reviews
                                 </x-dropdown-link>
                             @endif
-
-                            {{-- Link para perfil do usuário --}}
-                            <x-dropdown-link href="{{ route('profile.show') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isProfile ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
-                                Perfil
-                            </x-dropdown-link>
 
                             {{-- Links de administração para admin --}}
                             @if (Auth::user()->role === 'admin')

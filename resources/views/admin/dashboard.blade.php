@@ -178,7 +178,11 @@
                                     </td>
                                     <td class="py-2">
                                         <div class="flex items-center gap-3">
-                                            <img src="{{ $requisicao->cidadao_foto_url }}" alt="{{ $requisicao->cidadao_nome ?? $requisicao->user?->name ?? 'Cidadão' }}" class="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0">
+                                            @php
+                                                $user = $requisicao->user ?? null;
+                                                $foto = ($user && $user->profile_photo_path) ? asset('storage/'.$user->profile_photo_path) : ($user ? $user->profile_photo_url : '');
+                                            @endphp
+                                            <img src="{{ $foto }}" alt="{{ $requisicao->cidadao_nome ?? $user?->name ?? 'Cidadão' }}" class="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0">
                                             <div>
                                                 <p class="text-gray-800 font-medium">{{ $requisicao->cidadao_nome ?? $requisicao->user?->name ?? '-' }}</p>
                                                 <p class="text-xs text-gray-400">{{ $requisicao->cidadao_email ?? $requisicao->user?->email ?? '-' }}</p>
@@ -242,7 +246,11 @@
                         <div class="card-body p-4">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-3 min-w-0">
-                                    <img src="{{ $requisicao->cidadao_foto_url }}" alt="{{ $requisicao->cidadao_nome ?? auth()->user()->name }}" class="w-12 h-12 rounded-full object-cover border border-gray-200 shrink-0">
+                                    @php
+                                        $user = auth()->user();
+                                        $foto = $user->profile_photo_path ? asset('storage/'.$user->profile_photo_path) : $user->profile_photo_url;
+                                    @endphp
+                                    <img src="{{ $foto }}" alt="{{ $requisicao->cidadao_nome ?? $user->name }}" class="w-12 h-12 rounded-full object-cover border border-gray-200 shrink-0">
                                     <div class="min-w-0">
                                         <p class="text-xs uppercase tracking-wide text-gray-400">Cidadão</p>
                                         <p class="text-sm font-medium text-gray-700 truncate">{{ $requisicao->cidadao_nome ?? auth()->user()->name }}</p>

@@ -31,6 +31,33 @@ class Livro extends Model
     {
         return $this->hasMany(Requisicao::class);
     }
+    /**
+     * Retorna livros relacionados com base em palavras-chave da descrição (bibliografia).
+     * Exclui o próprio livro da lista.
+     * @param int $limit
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function relacionados($limit = 4)
+    {
+        // Extrai palavras-chave da descrição do livro atual
+        $palavras = collect(preg_split('/\W+/', strtolower($this->bibliografia)))->filter(function($p) {
+            return strlen($p) > 3; // ignora palavras muito curtas
+        })->unique();
+
+        if ($palavras->isEmpty()) {
+            return collect();
+        }
+
+        // Monta a query para encontrar livros com descrições semelhantes
+        $query = Livro::where('id', '!=', $this->id);
+        $query->where(function($q) use ($palavras) {
+            foreach ($palavras as $palavra) {
+                $q->orWhere('bibliografia', 'LIKE', "%$palavra%");
+            }
+        });
+
+        return $query->limit($limit)->get();
+    }
 }
 
 
