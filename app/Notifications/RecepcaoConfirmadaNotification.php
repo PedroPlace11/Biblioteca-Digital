@@ -34,7 +34,7 @@ class RecepcaoConfirmadaNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         // Link para o detalhe do livro associado à requisição encerrada.
-        $urlLivro = route('livros.show', $this->livro->id);
+        $urlLivro = route('livros.show', $this->livro);
 
         // Email com resumo do encerramento e métricas de duração da requisição.
         return (new MailMessage)
@@ -60,7 +60,7 @@ class RecepcaoConfirmadaNotification extends Notification
             'title' => 'Receção confirmada',
             'message' => 'A devolução de "' . $this->livro->nome . '" foi confirmada por ' . $this->adminConfirmador->name . '.',
             'livro_nome' => $this->livro->nome,
-            'livro_url' => route('livros.show', $this->livro->id),
+            'livro_url' => route('livros.show', $this->livro),
             'cidadao_numero_leitor' => $this->requisicao->cidadao_numero_leitor,
             'admin_confirmador_nome' => $this->adminConfirmador->name,
             'created_at' => now()->toIso8601String(),

@@ -36,7 +36,7 @@ class RequisicaoCriadaNotification extends Notification
     {
         // Ajusta o rótulo do perfil para exibir no corpo do email.
         $papel = $this->requisitante->role === 'admin' ? 'Admin' : 'Cidadão';
-        $urlLivro = route('livros.show', $this->livro->id);
+        $urlLivro = route('livros.show', $this->livro);
         $capaUrl = $this->livro->imagem_capa ? asset($this->livro->imagem_capa) : null;
 
         // Mensagem principal com dados da requisição recém-criada.
@@ -86,7 +86,7 @@ class RequisicaoCriadaNotification extends Notification
             'message' => 'Nova requisição de "' . $this->livro->nome . '" feita por ' . $this->requisitante->name . ' (' . $papel . ').',
             'numero_requisicao' => $this->requisicao->numero_requisicao,
             'livro_nome' => $this->livro->nome,
-            'livro_url' => route('livros.show', $this->livro->id),
+            'livro_url' => route('livros.show', $this->livro),
             'cidadao_numero_leitor' => $this->requisicao->cidadao_numero_leitor,
             'requisitante_nome' => $this->requisitante->name,
             'requisitante_role' => $this->requisitante->role,

@@ -28,7 +28,7 @@
             @foreach ($livros as $livro)
                 @auth
                     {{-- Usuário autenticado pode clicar para ver detalhes do livro --}}
-                    <a href="{{ route('livros.show', $livro->id) }}"
+                    <a href="{{ route('livros.show', $livro) }}"
                         class="bg-white rounded-xl shadow hover:shadow-lg transition-transform hover:scale-105 overflow-hidden flex flex-col"
                         style="width: 176px;">
                         @if ($livro->imagem_capa)
@@ -65,7 +65,7 @@
         {{-- Lista de autores vinculados aos livros da editora --}}
         <div class="flex flex-wrap justify-center gap-4">
             @foreach ($autores as $autor)
-                <a href="{{ route('autores.show', $autor->id) }}"
+                <a href="{{ route('autores.show', $autor) }}"
                     class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow flex items-center gap-3 px-4 py-3"
                     style="width: 220px;">
                     @if ($autor->foto)

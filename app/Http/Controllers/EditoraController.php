@@ -47,8 +47,14 @@ class EditoraController extends Controller
     }
 
     // Exibe a pagina da editora com livros publicados e autores relacionados.
-    public function show(Editora $editora)
+    public function show(Request $request, Editora $editora)
     {
+        $parametroRota = (string) $request->segment(2);
+
+        if ($parametroRota !== (string) $editora->getRouteKey()) {
+            return redirect()->route('editoras.show', $editora, 301);
+        }
+
         $livros = $editora->livros()->with('autores')->get();
         $autores = $livros->flatMap(function ($livro) {
             return $livro->autores;
@@ -57,8 +63,14 @@ class EditoraController extends Controller
     }
 
     // Exibe o formulario de edicao da editora.
-    public function edit(Editora $editora)
+    public function edit(Request $request, Editora $editora)
     {
+        $parametroRota = (string) $request->segment(2);
+
+        if ($parametroRota !== (string) $editora->getRouteKey()) {
+            return redirect()->route('editoras.edit', $editora, 301);
+        }
+
         return view('editoras.edit', compact('editora'));
     }
 
@@ -78,7 +90,7 @@ class EditoraController extends Controller
         }
 
         $editora->update($data);
-        return redirect()->route('editoras.show', $editora->id);
+        return redirect()->route('editoras.show', $editora);
     }
 
     // Remove livros e vinculos relacionados antes de excluir a editora.

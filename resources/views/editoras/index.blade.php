@@ -80,7 +80,7 @@
                                     </td>
                                     {{-- Nome da editora e quantidade de livros publicados --}}
                                     <td class="py-3">
-                                        <a href="{{ route('editoras.show', $editora->id) }}" class="font-semibold text-gray-900 hover:underline">{{ $editora->nome }}</a>
+                                        <a href="{{ route('editoras.show', $editora) }}" class="font-semibold text-gray-900 hover:underline">{{ $editora->nome }}</a>
                                         <p class="text-xs text-gray-400 mt-1">{{ $editora->livros->count() }} livro(s) publicado(s)</p>
                                     </td>
                                     {{-- Lista até 4 livros publicados, com link, e indica se há mais --}}
@@ -90,7 +90,7 @@
                                                 @if (!$loop->first)
                                                     <span class="text-gray-300">|</span>
                                                 @endif
-                                                <a href="{{ route('livros.show', $livro->id) }}" class="hover:underline">{{ $livro->nome }}</a>
+                                                <a href="{{ route('livros.show', $livro) }}" class="hover:underline">{{ $livro->nome }}</a>
                                             @endforeach
                                             @if ($editora->livros->count() > 4)
                                                 <span class="text-xs text-gray-400">+{{ $editora->livros->count() - 4 }}</span>
@@ -102,7 +102,7 @@
                                     {{-- Ações administrativas: editar editora (apenas para admin) --}}
                                     @if ($isAdmin)
                                         <td class="py-3">
-                                            <a href="{{ route('editoras.edit', $editora->id) }}" class="btn btn-sm btn-outline">Editar</a>
+                                            <a href="{{ route('editoras.edit', $editora) }}" class="btn btn-sm btn-outline">Editar</a>
                                         </td>
                                     @endif
                                 </tr>

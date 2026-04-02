@@ -2,7 +2,7 @@
     <div class="p-6 max-w-5xl mx-auto">
         <div class="mb-6 text-left">
             {{-- Botão para voltar ao perfil da editora --}}
-            <a href="{{ route('editoras.show', $editora->id) }}" class="btn btn-outline text-xl px-4 py-2 min-h-0 h-auto leading-none" aria-label="Voltar à Editora" title="Voltar">&larr;</a>
+            <a href="{{ route('editoras.show', $editora) }}" class="btn btn-outline text-xl px-4 py-2 min-h-0 h-auto leading-none" aria-label="Voltar à Editora" title="Voltar">&larr;</a>
         </div>
 
         <div class="card bg-base-100 border border-base-200 shadow-sm">
@@ -13,7 +13,7 @@
                         <p class="text-sm text-base-content/70 mt-2">Atualize os dados da editora e o logótipo institucional.</p>
                     </div>
                     {{-- Botão para apagar a editora, com confirmação --}}
-                    <form action="{{ route('editoras.destroy', $editora->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja apagar esta editora?');">
+                    <form action="{{ route('editoras.destroy', $editora) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja apagar esta editora?');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white text-red-600 border border-red-300 text-sm font-semibold hover:bg-red-50 hover:border-red-400 transition-colors">
@@ -30,7 +30,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('editoras.update', $editora->id) }}" enctype="multipart/form-data" class="space-y-6">
+                <form method="POST" action="{{ route('editoras.update', $editora) }}" enctype="multipart/form-data" class="space-y-6">
                     @csrf
                     @method('PUT')
 
@@ -69,7 +69,7 @@
 
                     <div class="pt-2 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
                         {{-- Botão para cancelar e voltar, e botão para submeter as alterações --}}
-                        <a href="{{ route('editoras.show', $editora->id) }}" class="btn btn-ghost">Cancelar</a>
+                        <a href="{{ route('editoras.show', $editora) }}" class="btn btn-ghost">Cancelar</a>
                         <button class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white" type="submit">Atualizar</button>
                     </div>
                 </form>

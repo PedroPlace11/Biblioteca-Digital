@@ -33,7 +33,7 @@ class ReviewEstadoAtualizadoNotification extends Notification
         if ($this->review->estado === 'recusado') {
             $msg->line('Justificação da recusa:')->line($this->review->justificacao);
         }
-        return $msg->action('Ver review', url(route('livros.show', $this->review->livro_id)));
+        return $msg->action('Ver review', url(route('livros.show', $this->review->livro)));
     }
 
     public function toArray($notifiable)
@@ -56,9 +56,9 @@ class ReviewEstadoAtualizadoNotification extends Notification
             'livro_nome' => $this->review->livro->nome,
             'estado' => $this->review->estado,
             'justificacao' => $this->review->justificacao,
-            'livro_url' => route('livros.show', $this->review->livro_id),
+            'livro_url' => route('livros.show', $this->review->livro),
             // Adiciona o link relativo para o detalhe do review do cidadão
-            'review_url' => route('cidadao.reviews.show', $this->review->id, false),
+            'review_url' => route('cidadao.reviews.show', $this->review, false),
         ];
     }
 

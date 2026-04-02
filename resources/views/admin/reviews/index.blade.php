@@ -65,7 +65,7 @@
                         </td>
                         <td class="px-4 py-2">{{ $review->created_at->format('d/m/Y H:i') }}</td>
                         <td class="px-4 py-2">
-                            <a href="{{ route('admin.reviews.show', $review->id) }}" class="px-2 py-1 rounded bg-black text-white font-bold border border-black text-xs">Ver</a>
+                            <a href="{{ route('admin.reviews.show', $review) }}" class="px-2 py-1 rounded bg-black text-white font-bold border border-black text-xs">Ver</a>
                         </td>
                     </tr>
                     @endforeach

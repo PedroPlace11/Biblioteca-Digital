@@ -2,12 +2,14 @@
 namespace App\Http\Controllers;
 
 use App\Exports\LivrosExport;
+use App\Models\AlertaDisponibilidadeLivro;
 use App\Models\Livro;
 use App\Models\Autor;
 use App\Models\Editora;
 use App\Models\Requisicao;
 use App\Models\User;
 use App\Notifications\DevolucaoSolicitadaNotification;
+use App\Notifications\LivroDisponivelNotification;
 use App\Notifications\RecepcaoConfirmadaNotification;
 use App\Notifications\RequisicaoCriadaNotification;
 use Carbon\Carbon;
@@ -88,7 +90,7 @@ class LivroController extends Controller
             $livro->autores()->sync($idsAutores);
         }
 
-        return redirect()->route('livros.show', $livro->id)->with('popup_success', 'Livro importado com sucesso!');
+        return redirect()->route('livros.show', $livro)->with('popup_success', 'Livro importado com sucesso!');
     }
     // Exporta os livros para um ficheiro Excel.
     public function export()
@@ -161,7 +163,7 @@ class LivroController extends Controller
         }
 
         if ($resultado === 'indisponivel') {
-            return redirect()->route('livros.show', $livro->id)->with('info', 'Livro indisponível no momento.');
+            return redirect()->route('livros.show', $livro)->with('info', 'Livro indisponível no momento.');
         }
 
         if ($resultado === 'limite_requisicoes_ativas') {
@@ -202,7 +204,7 @@ class LivroController extends Controller
             }
         }
 
-        return redirect()->route('livros.show', $livro->id)->with('popup_success', 'Livro requisitado com sucesso.');
+        return redirect()->route('livros.show', $livro)->with('popup_success', 'Livro requisitado com sucesso.');
     }
 
     // Cancela a requisicao de um livro feita pelo utilizador autenticado.
@@ -260,6 +262,52 @@ class LivroController extends Controller
         return redirect()->back()->with('popup_success', 'Pedido de devolução enviado. Aguarde a confirmação do admin.');
     }
 
+    // Regista interesse para receber alerta quando o livro voltar a ficar disponível.
+    public function ativarAlertaDisponibilidade(Livro $livro)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $user = Auth::user();
+
+        if (!$user instanceof User) {
+            abort(403);
+        }
+
+        if ($user->role !== 'cidadao') {
+            return redirect()->back()->with('popup_info', 'Apenas cidadãos podem ativar alertas de disponibilidade.');
+        }
+
+        $livroIndisponivel = Requisicao::where('livro_id', $livro->id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if (!$livroIndisponivel) {
+            return redirect()->route('livros.show', $livro)->with('popup_info', 'Este livro já está disponível para requisição.');
+        }
+
+        $requisitadoPorMim = Requisicao::where('livro_id', $livro->id)
+            ->where('user_id', $user->id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($requisitadoPorMim) {
+            return redirect()->route('livros.show', $livro)->with('popup_info', 'Já tem uma requisição ativa deste livro.');
+        }
+
+        $alerta = AlertaDisponibilidadeLivro::firstOrCreate([
+            'user_id' => $user->id,
+            'livro_id' => $livro->id,
+        ]);
+
+        if ($alerta->wasRecentlyCreated) {
+            return redirect()->route('livros.show', $livro)->with('popup_success', 'Alerta ativado. Será notificado quando o livro ficará disponível.');
+        }
+
+        return redirect()->route('livros.show', $livro)->with('popup_info', 'O alerta para este livro já se encontra ativo.');
+    }
+
     // Confirma a receção do livro por um admin e encerra a requisição.
     public function confirmarRecepcao(Requisicao $requisicao)
     {
@@ -313,6 +361,12 @@ class LivroController extends Controller
                     'error' => $e->getMessage(),
                 ]);
             }
+        }
+
+        $livro = $requisicao->livro;
+
+        if ($livro instanceof Livro) {
+            $this->notificarInteressadosLivroDisponivel($livro);
         }
 
         $requisicao->delete();
@@ -417,8 +471,14 @@ class LivroController extends Controller
     }
 
     // Exibe os detalhes completos do livro.
-    public function show(Livro $livro)
+    public function show(Request $request, Livro $livro)
     {
+        $parametroRota = (string) $request->segment(2);
+
+        if ($parametroRota !== (string) $livro->getRouteKey()) {
+            return redirect()->route('livros.show', $livro, 301);
+        }
+
         $livro->load('autores', 'editora');
         $livroIndisponivel = Requisicao::where('livro_id', $livro->id)
             ->whereNull('deleted_at')
@@ -433,6 +493,14 @@ class LivroController extends Controller
                 ->first();
 
             $requisitadoPorMim = (bool) $minhaRequisicaoAtiva;
+        }
+
+        $alertaDisponibilidadeAtivo = false;
+
+        if (Auth::check() && Auth::user()?->role === 'cidadao' && $livroIndisponivel && !$requisitadoPorMim) {
+            $alertaDisponibilidadeAtivo = AlertaDisponibilidadeLivro::where('livro_id', $livro->id)
+                ->where('user_id', Auth::id())
+                ->exists();
         }
 
         // Livros relacionados por similaridade de descrição
@@ -461,7 +529,51 @@ class LivroController extends Controller
             ->latest()
             ->get();
 
-        return view('livros.show', compact('livro', 'livroIndisponivel', 'requisitadoPorMim', 'minhaRequisicaoAtiva', 'historicoRequisicoesPorCidadao', 'reviewsAtivos', 'livrosRelacionados'));
+        return view('livros.show', compact('livro', 'livroIndisponivel', 'requisitadoPorMim', 'minhaRequisicaoAtiva', 'alertaDisponibilidadeAtivo', 'historicoRequisicoesPorCidadao', 'reviewsAtivos', 'livrosRelacionados'));
+    }
+
+    /**
+     * Notifica os cidadãos inscritos quando o livro volta a estar disponível.
+     */
+    protected function notificarInteressadosLivroDisponivel(Livro $livro): void
+    {
+        $alertas = AlertaDisponibilidadeLivro::with('user')
+            ->where('livro_id', $livro->id)
+            ->get();
+
+        if ($alertas->isEmpty()) {
+            return;
+        }
+
+        $destinatarios = $alertas
+            ->pluck('user')
+            ->filter(fn ($user) => $user instanceof User && $user->role === 'cidadao')
+            ->unique('id')
+            ->values();
+
+        if ($destinatarios->isEmpty()) {
+            AlertaDisponibilidadeLivro::where('livro_id', $livro->id)->delete();
+            return;
+        }
+
+        $databaseNotification = new LivroDisponivelNotification($livro, ['database']);
+        $mailNotification = new LivroDisponivelNotification($livro, ['mail']);
+
+        Notification::send($destinatarios, $databaseNotification);
+
+        try {
+            Notification::send($destinatarios, $mailNotification);
+        } catch (\Throwable $e) {
+            Log::warning('Falha no envio de email de livro disponível.', [
+                'livro_id' => $livro->id,
+                'destinatarios' => $destinatarios->pluck('id')->all(),
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        AlertaDisponibilidadeLivro::where('livro_id', $livro->id)
+            ->whereIn('user_id', $destinatarios->pluck('id'))
+            ->delete();
     }
 
     // Atualiza os dados do livro, incluindo capa e autores vinculados.
@@ -487,7 +599,7 @@ class LivroController extends Controller
 
         $livro->update($data);
         $livro->autores()->sync($request->autores ?? []);
-        return redirect()->route('livros.show', $livro->id);
+        return redirect()->route('livros.show', $livro);
     }
 
     // Remove os vinculos de autores e depois exclui o livro.

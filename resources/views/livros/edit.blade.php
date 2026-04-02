@@ -2,7 +2,7 @@
     <div class="p-6 max-w-5xl mx-auto">
         <div class="mb-6 text-left">
             {{-- Botão para voltar ao perfil do livro --}}
-            <a href="{{ route('livros.show', $livro->id) }}" class="btn btn-outline text-xl px-4 py-2 min-h-0 h-auto leading-none" aria-label="Voltar ao Livro" title="Voltar">&larr;</a>
+            <a href="{{ route('livros.show', $livro) }}" class="btn btn-outline text-xl px-4 py-2 min-h-0 h-auto leading-none" aria-label="Voltar ao Livro" title="Voltar">&larr;</a>
         </div>
 
         <div class="card bg-base-100 border border-base-200 shadow-sm">
@@ -13,7 +13,7 @@
                         <p class="text-sm text-base-content/70 mt-2">Atualize metadados, relações e capa do livro.</p>
                     </div>
                     {{-- Botão para apagar o livro, com confirmação --}}
-                    <form action="{{ route('livros.destroy', $livro->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja apagar este livro?');">
+                    <form action="{{ route('livros.destroy', $livro) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja apagar este livro?');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white text-red-600 border border-red-300 text-sm font-semibold hover:bg-red-50 hover:border-red-400 transition-colors">
@@ -30,7 +30,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('livros.update', $livro->id) }}" enctype="multipart/form-data" class="space-y-6">
+                <form method="POST" action="{{ route('livros.update', $livro) }}" enctype="multipart/form-data" class="space-y-6">
                     @csrf
                     @method('PUT')
 
@@ -143,7 +143,7 @@
 
                     <div class="pt-2 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
                         {{-- Botão para cancelar e voltar, e botão para submeter as alterações --}}
-                        <a href="{{ route('livros.show', $livro->id) }}" class="btn btn-ghost">Cancelar</a>
+                        <a href="{{ route('livros.show', $livro) }}" class="btn btn-ghost">Cancelar</a>
                         <button class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white" type="submit">Atualizar</button>
                     </div>
                 </form>

@@ -16,10 +16,15 @@ class CorrigirLinksNotificacoesReview extends Command
         DatabaseNotification::where('type', 'App\\Notifications\\ReviewSubmetidoNotification')->get()->each(function($n) use (&$count) {
             $data = is_array($n->data) ? $n->data : json_decode($n->data, true);
             if (isset($data['review_id'])) {
-                $data['livro_url'] = url('/admin/reviews/' . $data['review_id']);
-                $n->data = $data;
-                $n->save();
-                $count++;
+                $review = \App\Models\Review::find($data['review_id']);
+
+                if ($review) {
+                    $data['review_url'] = route('admin.reviews.show', $review, false);
+                    $data['livro_url'] = route('admin.reviews.show', $review, false);
+                    $n->data = $data;
+                    $n->save();
+                    $count++;
+                }
             }
         });
         $this->info("Corrigidas {$count} notificações de review para admin.");

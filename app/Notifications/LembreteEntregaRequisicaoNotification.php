@@ -33,7 +33,7 @@ class LembreteEntregaRequisicaoNotification extends Notification
         $livro = $this->requisicao->livro;
 
         // Se o livro não existir, direciona para o dashboard como fallback seguro.
-        $urlLivro = $livro ? route('livros.show', $livro->id) : route('dashboard');
+        $urlLivro = $livro ? route('livros.show', $livro) : route('dashboard');
 
         // Estrutura do email com contexto suficiente para identificar a requisição.
         return (new MailMessage)
@@ -61,7 +61,7 @@ class LembreteEntregaRequisicaoNotification extends Notification
             'message' => 'A requisição ' . ($this->requisicao->numero_requisicao ?: '-') . ' do livro "' . ($livro?->nome ?? '-') . '" termina amanhã.',
             'requisicao_numero' => $this->requisicao->numero_requisicao,
             'livro_nome' => $livro?->nome,
-            'livro_url' => $livro ? route('livros.show', $livro->id) : route('dashboard'),
+            'livro_url' => $livro ? route('livros.show', $livro) : route('dashboard'),
             'data_fim_prevista' => $this->requisicao->data_fim_prevista?->toIso8601String(),
             'created_at' => now()->toIso8601String(),
         ];

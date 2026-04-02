@@ -32,7 +32,7 @@
             @foreach ($autor->livros as $livro)
                 @auth
                     {{-- Usuário autenticado pode clicar para ver detalhes do livro --}}
-                    <a href="{{ route('livros.show', $livro->id) }}"
+                    <a href="{{ route('livros.show', $livro) }}"
                         class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden flex flex-col w-52">
                         @if ($livro->imagem_capa)
                             {{-- Exibe a capa do livro, se houver --}}
@@ -67,7 +67,7 @@
 
             <div class="flex flex-wrap justify-center gap-4">
                 @foreach ($editoras as $editora)
-                    <a href="{{ route('editoras.show', $editora->id) }}"
+                        <a href="{{ route('editoras.show', $editora) }}"
                         class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow flex items-center gap-3 px-4 py-3"
                         style="width: 220px;">
                         @if ($editora->logotipo)

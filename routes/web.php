@@ -193,8 +193,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Gestão de reviews
     Route::get('admin/reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
-    Route::get('admin/reviews/{id}', [AdminReviewController::class, 'show'])->name('admin.reviews.show');
-    Route::patch('admin/reviews/{id}', [AdminReviewController::class, 'update'])->name('admin.reviews.update');
+    Route::get('admin/reviews/{review}', [AdminReviewController::class, 'show'])->name('admin.reviews.show');
+    Route::patch('admin/reviews/{review}', [AdminReviewController::class, 'update'])->name('admin.reviews.update');
 
 });
 
@@ -218,6 +218,7 @@ Route::middleware(['auth'])->group(function () {
     });
     Route::post('/livros/{livro}/requisitar', [LivroController::class, 'requisitar'])->name('livros.requisitar');
     Route::delete('/livros/{livro}/requisitar', [LivroController::class, 'cancelarRequisicao'])->name('livros.cancelar-requisicao');
+    Route::post('/livros/{livro}/alerta-disponibilidade', [LivroController::class, 'ativarAlertaDisponibilidade'])->name('livros.alerta-disponibilidade');
     Route::post('/notificacoes/{notification}/lida', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notificacoes/ler-todas', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 
@@ -230,7 +231,7 @@ use App\Http\Controllers\Cidadao\ReviewController as CidadaoReviewController;
 // Rotas para reviews do cidadão (apenas aprovados e recusados)
 Route::prefix('conta')->middleware(['auth', 'verified'])->group(function () {
     Route::get('reviews', [CidadaoReviewController::class, 'index'])->name('cidadao.reviews.index');
-    Route::get('reviews/{id}', [CidadaoReviewController::class, 'show'])->name('cidadao.reviews.show');
+    Route::get('reviews/{review}', [CidadaoReviewController::class, 'show'])->name('cidadao.reviews.show');
 });
 
 // Rotas públicas de catálogo.
@@ -240,13 +241,13 @@ Route::get('/livros/googlebooks', [LivroController::class, 'pesquisarGoogleBooks
 Route::post('/livros/googlebooks/salvar', [LivroController::class, 'salvarGoogleBook'])->name('livros.googlebooks.salvar');
 
 Route::get('/livros', [LivroController::class, 'index'])->name('livros.index');
-Route::get('/livros/{livro}', [LivroController::class, 'show'])->name('livros.show')->where('livro', '[A-Za-z0-9]+');
+Route::get('/livros/{livro}', [LivroController::class, 'show'])->name('livros.show');
 
 Route::get('/autores', [AutorController::class, 'index'])->name('autores.index');
-Route::get('/autores/{autor}', [AutorController::class, 'show'])->name('autores.show')->where('autor', '[A-Za-z0-9]+');
+Route::get('/autores/{autor}', [AutorController::class, 'show'])->name('autores.show');
 
 Route::get('/editoras', [EditoraController::class, 'index'])->name('editoras.index');
-Route::get('/editoras/{editora}', [EditoraController::class, 'show'])->name('editoras.show')->where('editora', '[A-Za-z0-9]+');
+Route::get('/editoras/{editora}', [EditoraController::class, 'show'])->name('editoras.show');
 
 // Autenticação unificada em vista combinada.
 Route::get('/login', function () {

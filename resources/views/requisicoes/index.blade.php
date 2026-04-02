@@ -145,7 +145,7 @@
                                     </td>
                                     {{-- Coluna do nome do livro com link para detalhes --}}
                                     <td class="py-3">
-                                        <a href="{{ route('livros.show', $livro->id) }}" class="font-semibold text-gray-900 hover:underline">{{ $livro->nome }}</a>
+                                        <a href="{{ route('livros.show', $livro) }}" class="font-semibold text-gray-900 hover:underline">{{ $livro->nome }}</a>
                                     </td>
                                     {{-- Coluna dos autores do livro --}}
                                     <td class="py-3 text-gray-700">
@@ -168,7 +168,7 @@
                                     </td>
                                     {{-- Coluna de ação para ver detalhes do livro --}}
                                     <td class="py-3">
-                                         <a href="{{ route('livros.show', $livro->id) }}" class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver</a>
+                                         <a href="{{ route('livros.show', $livro) }}" class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver</a>
                                     </td>
                                 </tr>
                             @endforeach

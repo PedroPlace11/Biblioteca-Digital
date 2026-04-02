@@ -45,7 +45,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('admin.reviews.update', $review->id) }}" class="space-y-6">
+                <form method="POST" action="{{ route('admin.reviews.update', $review) }}" class="space-y-6">
                     @csrf
                     @method('PATCH')
 

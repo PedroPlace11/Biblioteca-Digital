@@ -139,7 +139,7 @@
                                     </td>
                                     {{-- Nome do livro, ISBN e preço --}}
                                     <td class="py-3">
-                                        <a href="{{ route('livros.show', $livro->id) }}" class="text-gray-900 font-semibold hover:underline">
+                                        <a href="{{ route('livros.show', $livro) }}" class="text-gray-900 font-semibold hover:underline">
                                             {{ $livro->nome }}
                                         </a>
                                         <p class="text-xs text-gray-400 mt-1">ISBN: {{ $livro->isbn ?: '-' }}</p>
@@ -157,7 +157,7 @@
                                             @if (!$loop->first)
                                                 <span class="text-gray-300">|</span>
                                             @endif
-                                            <a href="{{ route('autores.show', $autor->id) }}" class="hover:underline">{{ $autor->nome }}</a>
+                                            <a href="{{ route('autores.show', $autor) }}" class="hover:underline">{{ $autor->nome }}</a>
                                         @endforeach
                                     </td>
                                     {{-- Nome da editora --}}
@@ -174,9 +174,9 @@
                                     <td class="py-3">
                                         <div class="flex flex-wrap items-center gap-2">
                                             <div class="flex flex-row gap-2">
-                                                <a href="{{ route('livros.show', $livro->id) }}" class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver</a>
+                                                <a href="{{ route('livros.show', $livro) }}" class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver</a>
                                                 @if (auth()->check() && !$indisponivel)
-                                                    <form action="{{ route('livros.requisitar', $livro->id) }}" method="POST">
+                                                    <form action="{{ route('livros.requisitar', $livro) }}" method="POST">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-outline">Requisitar</button>
                                                     </form>

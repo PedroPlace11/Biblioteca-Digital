@@ -77,12 +77,12 @@
                         @if (auth()->check())
                             <div class="flex items-center gap-2">
                                 @if (!empty($livroIndisponivel))
-                                    <span class="badge badge-success badge-outline">Requisitado</span>
+                                    <span class="badge border-[#00c98d] text-[#00b67a] bg-[#f2fff9] font-medium">Requisitado</span>
                                     @if (!empty($requisitadoPorMim))
                                         @if ($minhaRequisicaoAtiva && $minhaRequisicaoAtiva->devolucao_solicitada_em)
                                             <span class="badge border-amber-500 text-amber-700 bg-amber-50">Devolução em validação</span>
                                         @else
-                                            <form action="{{ route('livros.cancelar-requisicao', $livro->id) }}" method="POST">
+                                            <form action="{{ route('livros.cancelar-requisicao', $livro) }}" method="POST">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-outline btn-error">
@@ -90,9 +90,20 @@
                                                 </button>
                                             </form>
                                         @endif
+                                    @elseif (auth()->user()->role === 'cidadao')
+                                        @if (!empty($alertaDisponibilidadeAtivo))
+                                            <span class="badge border-[#9aa5b1] text-[#475569] bg-[#f8fafc] font-medium">Alerta ativo</span>
+                                        @else
+                                            <form action="{{ route('livros.alerta-disponibilidade', $livro) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline border-[#9aa5b1] text-[#334155] bg-white hover:bg-[#f8fafc] hover:border-[#7f8b98]">
+                                                    Avisar quando disponível
+                                                </button>
+                                            </form>
+                                        @endif
                                     @endif
                                 @else
-                                    <form action="{{ route('livros.requisitar', $livro->id) }}" method="POST">
+                                    <form action="{{ route('livros.requisitar', $livro) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white">
                                             Requisitar
@@ -101,7 +112,7 @@
                                 @endif
 
                                 @if (auth()->user()->role === 'admin')
-                                    <a href="{{ route('livros.edit', $livro->id) }}" class="btn btn-sm btn-outline">
+                                    <a href="{{ route('livros.edit', $livro) }}" class="btn btn-sm btn-outline">
                                         Editar
                                     </a>
                                 @endif
@@ -126,7 +137,7 @@
                     <div class="flex flex-col gap-3">
                         @foreach ($livro->autores as $autor)
                             {{-- Card clicável do autor --}}
-                            <a href="{{ route('autores.show', $autor->id) }}"
+                            <a href="{{ route('autores.show', $autor) }}"
                                 class="card bg-base-100 shadow hover:shadow-md transition-shadow">
                                 <div class="card-body flex-row items-center gap-3 p-4">
                                     {{-- Foto do autor ou inicial do nome quando não houver foto --}}
@@ -157,7 +168,7 @@
 
                 {{-- Card da editora vinculada ao livro --}}
                 @if ($livro->editora)
-                    <a href="{{ route('editoras.show', $livro->editora->id) }}"
+                    <a href="{{ route('editoras.show', $livro->editora) }}"
                         class="card bg-base-100 shadow hover:shadow-md transition-shadow">
                         <div class="card-body flex-row items-center gap-3 p-4">
                             {{-- Logotipo da editora ou inicial do nome quando não houver imagem --}}
@@ -345,7 +356,7 @@
                 <h2 class="text-2xl font-semibold mb-4">Livros Relacionados</h2>
                 <div class="flex flex-wrap justify-center gap-6">
                     @foreach($livrosRelacionados as $relacionado)
-                        <a href="{{ route('livros.show', $relacionado->id) }}" class="card bg-base-100 shadow hover:shadow-md transition-shadow" style="width: 220px;">
+                        <a href="{{ route('livros.show', $relacionado) }}" class="card bg-base-100 shadow hover:shadow-md transition-shadow" style="width: 220px;">
                             <div class="card-body p-4 flex flex-col items-center">
                                 @if ($relacionado->imagem_capa)
                                     <img src="{{ asset($relacionado->imagem_capa) }}" alt="Capa de {{ $relacionado->nome }}" class="w-24 h-36 object-cover rounded mb-2">

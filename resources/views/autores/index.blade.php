@@ -80,7 +80,7 @@
                                     </td>
                                     {{-- Nome do autor e quantidade de livros associados --}}
                                     <td class="py-3">
-                                        <a href="{{ route('autores.show', $autor->id) }}" class="font-semibold text-gray-900 hover:underline">{{ $autor->nome }}</a>
+                                        <a href="{{ route('autores.show', $autor) }}" class="font-semibold text-gray-900 hover:underline">{{ $autor->nome }}</a>
                                         <p class="text-xs text-gray-400 mt-1">{{ $autor->livros->count() }} livro(s) associado(s)</p>
                                     </td>
                                     {{-- Lista até 4 livros do autor, com link, e indica se há mais --}}
@@ -90,7 +90,7 @@
                                                 @if (!$loop->first)
                                                     <span class="text-gray-300">|</span>
                                                 @endif
-                                                <a href="{{ route('livros.show', $livro->id) }}" class="hover:underline">{{ $livro->nome }}</a>
+                                                <a href="{{ route('livros.show', $livro) }}" class="hover:underline">{{ $livro->nome }}</a>
                                             @endforeach
                                             @if ($autor->livros->count() > 4)
                                                 <span class="text-xs text-gray-400">+{{ $autor->livros->count() - 4 }}</span>
@@ -102,7 +102,7 @@
                                     {{-- Ações administrativas: editar autor (apenas para admin) --}}
                                     @if ($isAdmin)
                                         <td class="py-3">
-                                            <a href="{{ route('autores.edit', $autor->id) }}" class="btn btn-sm btn-outline">Editar</a>
+                                            <a href="{{ route('autores.edit', $autor) }}" class="btn btn-sm btn-outline">Editar</a>
                                         </td>
                                     @endif
                                 </tr>

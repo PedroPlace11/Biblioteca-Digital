@@ -56,15 +56,21 @@ class AdminReviewController extends Controller
         return view('admin.reviews.index', compact('reviews'));
     }
 
-    public function show($id)
+    public function show(Request $request, Review $review)
     {
-        $review = Review::with(['user', 'livro'])->findOrFail($id);
+        $review->load(['user', 'livro']);
+
+        $parametroRota = (string) $request->segment(3);
+
+        if ($parametroRota !== (string) $review->getRouteKey()) {
+            return redirect()->route('admin.reviews.show', $review, 301);
+        }
+
         return view('admin.reviews.show', compact('review'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Review $review)
     {
-        $review = Review::findOrFail($id);
         $request->validate([
             'estado' => 'required|in:ativo,recusado',
             'justificacao' => 'nullable|string|max:2000',

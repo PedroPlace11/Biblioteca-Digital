@@ -44,12 +44,20 @@ class ReviewController extends Controller
         return view('cidadao.reviews.index', compact('reviews'));
     }
 
-    public function show($id)
+    public function show(Request $request, Review $review)
     {
-        $review = Auth::user()
-            ->reviews()
-            ->with('livro')
-            ->findOrFail($id);
+        if ((int) $review->user_id !== (int) Auth::id()) {
+            abort(404);
+        }
+
+        $review->load('livro');
+
+        $parametroRota = (string) $request->segment(3);
+
+        if ($parametroRota !== (string) $review->getRouteKey()) {
+            return redirect()->route('cidadao.reviews.show', $review, 301);
+        }
+
         return view('cidadao.reviews.show', compact('review'));
     }
 }

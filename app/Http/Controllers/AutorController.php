@@ -46,16 +46,28 @@ class AutorController extends Controller
     }
 
     // Exibe detalhes do autor com seus livros e editoras relacionadas.
-    public function show(Autor $autor)
+    public function show(Request $request, Autor $autor)
     {
+        $parametroRota = (string) $request->segment(2);
+
+        if ($parametroRota !== (string) $autor->getRouteKey()) {
+            return redirect()->route('autores.show', $autor, 301);
+        }
+
         $autor->load('livros.editora');
         $editoras = $autor->livros->pluck('editora')->filter()->unique('id');
         return view('autores.show', compact('autor', 'editoras'));
     }
 
     // Exibe o formulario de edicao do autor.
-    public function edit(Autor $autor)
+    public function edit(Request $request, Autor $autor)
     {
+        $parametroRota = (string) $request->segment(2);
+
+        if ($parametroRota !== (string) $autor->getRouteKey()) {
+            return redirect()->route('autores.edit', $autor, 301);
+        }
+
         return view('autores.edit', compact('autor'));
     }
 
@@ -76,7 +88,7 @@ class AutorController extends Controller
         }
 
         $autor->update($data);
-        return redirect()->route('autores.show', $autor->id);
+        return redirect()->route('autores.show', $autor);
     }
 
     // Remove os vinculos com livros antes de excluir o autor.

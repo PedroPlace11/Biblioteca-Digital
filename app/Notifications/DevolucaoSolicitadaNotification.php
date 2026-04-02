@@ -37,7 +37,7 @@ class DevolucaoSolicitadaNotification extends Notification
         $papel = $this->solicitante->role === 'admin' ? 'Admin' : 'Cidadão';
 
         // Link direto para a pagina do livro, onde o admin pode confirmar a rececao.
-        $urlLivro = route('livros.show', $this->livro->id);
+        $urlLivro = route('livros.show', $this->livro);
 
         // Monta email com contexto completo da requisicao e do pedido de devolucao.
         return (new MailMessage)
@@ -67,7 +67,7 @@ class DevolucaoSolicitadaNotification extends Notification
             'title' => 'Pedido de devolução',
             'message' => 'Pedido de devolução de "' . $this->livro->nome . '" solicitado por ' . $this->solicitante->name . ' (' . $papel . ').',
             'livro_nome' => $this->livro->nome,
-            'livro_url' => route('livros.show', $this->livro->id),
+            'livro_url' => route('livros.show', $this->livro),
             'cidadao_numero_leitor' => $this->requisicao->cidadao_numero_leitor,
             'solicitante_nome' => $this->solicitante->name,
             'solicitante_role' => $this->solicitante->role,

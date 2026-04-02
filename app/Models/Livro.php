@@ -2,17 +2,71 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Livro extends Model
 {
     protected $fillable = [
         'isbn',
         'nome',
+        'slug',
         'editora_id',
         'bibliografia',
         'imagem_capa',
         'preco'
     ];
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $livro): void {
+            if (!$livro->isDirty('nome') && !empty($livro->slug)) {
+                return;
+            }
+
+            $livro->slug = static::generateUniqueSlug($livro->nome, $livro->id);
+        });
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $query = $this->newQuery();
+
+        $livro = $query
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->orWhere('nome', $value)
+            ->when(is_numeric($value), fn ($q) => $q->orWhere('id', (int) $value))
+            ->first();
+
+        if (!$livro) {
+            abort(404);
+        }
+
+        return $livro;
+    }
+
+    protected static function generateUniqueSlug(string $nome, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($nome);
+        $base = $base !== '' ? $base : 'livro';
+
+        $slug = $base;
+        $suffix = 2;
+
+        while (static::query()
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->where('slug', $slug)
+            ->exists()) {
+            $slug = $base . '-' . $suffix;
+            $suffix++;
+        }
+
+        return $slug;
+    }
 
     // Relacao N:1 com a editora do livro.
     public function editora()
@@ -31,6 +85,13 @@ class Livro extends Model
     {
         return $this->hasMany(Requisicao::class);
     }
+
+    // Relacao 1:N com alertas de disponibilidade criados para este livro.
+    public function alertasDisponibilidade()
+    {
+        return $this->hasMany(AlertaDisponibilidadeLivro::class);
+    }
+
     /**
      * Retorna livros relacionados com base em palavras-chave da descrição (bibliografia).
      * Exclui o próprio livro da lista.

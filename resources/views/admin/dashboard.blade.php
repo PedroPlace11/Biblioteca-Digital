@@ -79,7 +79,7 @@
         </h2>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-10">
             @foreach ($ultimosLivros as $livro)
-                <a href="{{ route('livros.show', $livro->id) }}" class="card bg-base-100 shadow hover:shadow-lg">
+                <a href="{{ route('livros.show', $livro) }}" class="card bg-base-100 shadow hover:shadow-lg">
                     @if ($livro->imagem_capa)
                         <img src="{{ asset($livro->imagem_capa) }}" class="h-60 object-cover">
                     @endif
@@ -242,7 +242,7 @@
         @if ($minhasRequisicoesAdmin->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach ($minhasRequisicoesAdmin as $requisicao)
-                    <a href="{{ route('livros.show', $requisicao->livro->id) }}" class="card bg-base-100 shadow hover:shadow-lg">
+                    <a href="{{ route('livros.show', $requisicao->livro) }}" class="card bg-base-100 shadow hover:shadow-lg">
                         <div class="card-body p-4">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-3 min-w-0">

@@ -189,6 +189,7 @@
                                                         $isConfirmacao = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'confirmação de requisição');
                                                         $isRecepcao = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'receção confirmada');
                                                         $isDevolucao = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'pedido de devolução');
+                                                        $isLivroDisponivel = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'livro disponível');
                                                         $reviewUrl = $notification->data['review_url'] ?? null;
                                                         $livroUrl = $notification->data['livro_url'] ?? null;
                                                         $adminReviewsUrl = route('admin.reviews.index');
@@ -201,6 +202,8 @@
                                                         @elseif($isReview)
                                                             {{ route('cidadao.reviews.index') }}
                                                         @elseif($isRecepcao && $livroUrl)
+                                                            {{ $livroUrl }}
+                                                        @elseif($isLivroDisponivel && $livroUrl)
                                                             {{ $livroUrl }}
                                                         @elseif(($isConfirmacao || $isDevolucao) && $livroUrl)
                                                             {{ $livroUrl }}

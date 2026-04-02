@@ -53,7 +53,7 @@
                 <h2 class="text-2xl font-bold mb-4">Últimos Livros Adicionados</h2>
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
                     @foreach($ultimosLivros as $livro)
-                        <a href="{{ route('livros.show', isset($livro->encrypted_id) ? $livro->encrypted_id : encrypt($livro->id)) }}" class="card bg-base-100 shadow hover:shadow-lg transition block">
+                        <a href="{{ route('livros.show', $livro) }}" class="card bg-base-100 shadow hover:shadow-lg transition block">
                             @if($livro->imagem_capa ?? $livro->capa_url)
                                 <img src="{{ asset($livro->imagem_capa ?? $livro->capa_url) }}" alt="Capa de {{ $livro->nome }}" class="h-60 w-full object-cover rounded-t" />
                             @else
