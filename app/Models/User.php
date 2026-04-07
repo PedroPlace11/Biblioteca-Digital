@@ -148,6 +148,18 @@ class User extends Authenticatable
     {
         return $this->hasMany(Review::class);
     }
+
+    // Relação 1:1 com o carrinho de compras do utilizador.
+    public function carrinho()
+    {
+        return $this->hasOne(Carrinho::class);
+    }
+
+    // Relação 1:N com encomendas feitas pelo utilizador.
+    public function encomendas()
+    {
+        return $this->hasMany(Encomenda::class);
+    }
 }
 
 

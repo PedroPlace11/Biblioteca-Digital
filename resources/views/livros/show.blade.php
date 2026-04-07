@@ -103,12 +103,23 @@
                                         @endif
                                     @endif
                                 @else
-                                    <form action="{{ route('livros.requisitar', $livro) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white">
-                                            Requisitar
-                                        </button>
-                                    </form>
+                                    <div class="flex items-center gap-2">
+                                        @if (auth()->user()->role === 'cidadao')
+                                            <form action="{{ route('carrinho.adicionar', $livro) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline border-slate-400 text-slate-700 hover:bg-slate-50">
+                                                    Adicionar ao carrinho
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        <form action="{{ route('livros.requisitar', $livro) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white">
+                                                Requisitar
+                                            </button>
+                                        </form>
+                                    </div>
                                 @endif
 
                                 @if (auth()->user()->role === 'admin')

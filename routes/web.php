@@ -1,12 +1,14 @@
 <?php
 
-
-
 use App\Http\Controllers\LivroController;
 use App\Http\Controllers\AutorController;
 use App\Http\Controllers\EditoraController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\Admin\EncomendaController as AdminEncomendaController;
+use App\Http\Controllers\CarrinhoController;
+use App\Http\Controllers\Cidadao\EncomendaController as CidadaoEncomendaController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RequisicaoController;
 use App\Models\Livro;
@@ -195,6 +197,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('admin/reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
     Route::get('admin/reviews/{review}', [AdminReviewController::class, 'show'])->name('admin.reviews.show');
     Route::patch('admin/reviews/{review}', [AdminReviewController::class, 'update'])->name('admin.reviews.update');
+    Route::get('admin/encomendas', [AdminEncomendaController::class, 'index'])->name('admin.encomendas.index');
+    Route::get('admin/encomendas/{encomenda}', [AdminEncomendaController::class, 'show'])->name('admin.encomendas.show');
+    Route::patch('admin/encomendas/{encomenda}/pagamento', [AdminEncomendaController::class, 'atualizarPagamento'])->name('admin.encomendas.pagamento');
 
 });
 
@@ -217,7 +222,24 @@ Route::middleware(['auth'])->group(function () {
             ->with('error', 'Para requisitar um livro, utilize o botão apropriado na lista de livros.');
     });
     Route::post('/livros/{livro}/requisitar', [LivroController::class, 'requisitar'])->name('livros.requisitar');
+    Route::post('/livros/{livro}/carrinho', [CarrinhoController::class, 'adicionar'])->name('carrinho.adicionar');
     Route::delete('/livros/{livro}/requisitar', [LivroController::class, 'cancelarRequisicao'])->name('livros.cancelar-requisicao');
+
+    Route::get('/carrinho', [CarrinhoController::class, 'index'])->name('carrinho.index');
+    Route::patch('/carrinho/itens/{itemId}', [CarrinhoController::class, 'atualizarQuantidade'])->name('carrinho.atualizar');
+    Route::delete('/carrinho/itens/{itemId}', [CarrinhoController::class, 'remover'])->name('carrinho.remover');
+    Route::delete('/carrinho', [CarrinhoController::class, 'limpar'])->name('carrinho.limpar');
+
+    Route::get('/checkout/morada', [CheckoutController::class, 'morada'])->name('checkout.morada');
+    Route::post('/checkout/morada', [CheckoutController::class, 'guardarMorada'])->name('checkout.morada.guardar');
+    Route::get('/checkout/pagamento', [CheckoutController::class, 'pagamento'])->name('checkout.pagamento');
+    Route::get('/checkout/pagamento/stripe', function () {
+        return redirect()->route('checkout.pagamento')
+            ->with('popup_info', 'Use o botao "Pagar com Stripe" para iniciar o pagamento.');
+    });
+    Route::post('/checkout/pagamento/stripe', [CheckoutController::class, 'criarSessaoStripe'])->name('checkout.pagamento.stripe');
+    Route::get('/checkout/sucesso', [CheckoutController::class, 'sucesso'])->name('checkout.sucesso');
+
     Route::post('/livros/{livro}/alerta-disponibilidade', [LivroController::class, 'ativarAlertaDisponibilidade'])->name('livros.alerta-disponibilidade');
     Route::post('/notificacoes/{notification}/lida', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notificacoes/ler-todas', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
@@ -232,6 +254,8 @@ use App\Http\Controllers\Cidadao\ReviewController as CidadaoReviewController;
 Route::prefix('conta')->middleware(['auth', 'verified'])->group(function () {
     Route::get('reviews', [CidadaoReviewController::class, 'index'])->name('cidadao.reviews.index');
     Route::get('reviews/{review}', [CidadaoReviewController::class, 'show'])->name('cidadao.reviews.show');
+    Route::get('encomendas', [CidadaoEncomendaController::class, 'index'])->name('cidadao.encomendas.index');
+    Route::get('encomendas/{encomenda}', [CidadaoEncomendaController::class, 'show'])->name('cidadao.encomendas.show');
 });
 
 // Rotas públicas de catálogo.

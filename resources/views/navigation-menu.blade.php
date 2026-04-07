@@ -2,12 +2,38 @@
 @php
     $isDashboard = request()->routeIs('dashboard');
     $isLivros = request()->routeIs('livros.*');
+    $isCarrinho = request()->routeIs('carrinho.*') || request()->routeIs('checkout.*');
     $isRequisicoes = request()->routeIs('requisicoes.*');
     $isAutores = request()->routeIs('autores.*');
     $isEditoras = request()->routeIs('editoras.*');
     $isProfile = request()->routeIs('profile.show');
+    $isCidadaoEncomendas = request()->routeIs('cidadao.encomendas.*');
     $isAdminsManage = request()->routeIs('admins.index');
     $isAdminsCreate = request()->routeIs('admins.create');
+    $isAdminEncomendas = request()->routeIs('admin.encomendas.*');
+    $cartCount = 0;
+    $cartSchemaReady = false;
+    $cartPreviewItems = collect();
+    $cartTotal = 0;
+
+    if (auth()->check() && auth()->user()->role === 'cidadao') {
+        try {
+            $cartSchemaReady = \Illuminate\Support\Facades\Schema::hasTable('carrinhos')
+                && \Illuminate\Support\Facades\Schema::hasTable('carrinho_itens');
+        } catch (\Throwable $e) {
+            $cartSchemaReady = false;
+        }
+
+        if ($cartSchemaReady) {
+            $carrinho = auth()->user()->carrinho()->with('itens.livro')->first();
+
+            if ($carrinho) {
+                $cartCount = (int) $carrinho->itens->sum('quantidade');
+                $cartPreviewItems = $carrinho->itens->take(5);
+                $cartTotal = (float) $carrinho->itens->sum(fn ($item) => (float) $item->subtotal);
+            }
+        }
+    }
 @endphp
 
 <nav class="bg-white border-b border-gray-100">
@@ -190,8 +216,13 @@
                                                         $isRecepcao = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'receção confirmada');
                                                         $isDevolucao = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'pedido de devolução');
                                                         $isLivroDisponivel = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'livro disponível');
+                                                        $isCarrinhoNotif = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'carrinho');
+                                                        $isEncomendaNotif = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'encomenda');
+                                                        $isPagamentoNotif = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'pagamento');
+                                                        $encomendaUrl = $notification->data['encomenda_url'] ?? null;
                                                         $reviewUrl = $notification->data['review_url'] ?? null;
                                                         $livroUrl = $notification->data['livro_url'] ?? null;
+                                                        $carrinhoUrl = $notification->data['carrinho_url'] ?? null;
                                                         $adminReviewsUrl = route('admin.reviews.index');
                                                     @endphp
                                                     <input type="hidden" name="redirect_to" value="
@@ -205,6 +236,10 @@
                                                             {{ $livroUrl }}
                                                         @elseif($isLivroDisponivel && $livroUrl)
                                                             {{ $livroUrl }}
+                                                        @elseif($isCarrinhoNotif && $carrinhoUrl)
+                                                            {{ $carrinhoUrl }}
+                                                        @elseif(($isEncomendaNotif || $isPagamentoNotif) && $encomendaUrl)
+                                                            {{ $encomendaUrl }}
                                                         @elseif(($isConfirmacao || $isDevolucao) && $livroUrl)
                                                             {{ $livroUrl }}
                                                         @else
@@ -241,6 +276,50 @@
                         </x-slot>
                     </x-dropdown>
                 </div>
+
+                @if (Auth::user()->role === 'cidadao' && $cartSchemaReady)
+                    <div class="ms-3 relative group">
+                        <a href="{{ route('carrinho.index') }}"
+                            class="relative inline-flex items-center justify-center size-9 rounded-full border transition overflow-visible {{ $isCarrinho ? 'border-sky-300 bg-sky-50 text-sky-700' : 'border-slate-200 text-slate-600 hover:bg-slate-100' }}"
+                            aria-label="Carrinho">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386a1.5 1.5 0 0 1 1.464 1.175L5.4 5.5m0 0h13.95a.75.75 0 0 1 .73.923l-1.2 5.25a.75.75 0 0 1-.73.577H7.05m-1.65-6.75 1.65 6.75m0 0a2.25 2.25 0 1 0 0 4.5h9.9a2.25 2.25 0 1 0 0-4.5H7.05Z" />
+                            </svg>
+                            @if ($cartCount > 0)
+                                <span class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] leading-5 font-bold text-center shadow-md ring-2 ring-white">
+                                    {{ $cartCount > 9 ? '9+' : $cartCount }}
+                                </span>
+                            @endif
+                        </a>
+
+                        <div class="absolute right-0 top-11 z-50 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl opacity-0 pointer-events-none transition duration-150 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm font-semibold text-slate-800">Carrinho</p>
+                                <span class="text-xs text-slate-500">{{ $cartCount }} item(ns)</span>
+                            </div>
+
+                            @if ($cartPreviewItems->isEmpty())
+                                <p class="mt-3 text-sm text-slate-500">O carrinho está vazio.</p>
+                            @else
+                                <div class="mt-3 max-h-64 overflow-y-auto divide-y divide-slate-100">
+                                    @foreach ($cartPreviewItems as $cartItem)
+                                        <div class="py-2">
+                                            <p class="text-sm font-medium text-slate-800 truncate">{{ $cartItem->livro?->nome ?? 'Livro removido' }}</p>
+                                            <p class="text-xs text-slate-500">
+                                                {{ $cartItem->quantidade }} x {{ number_format((float) $cartItem->preco_unitario, 2, ',', '.') }} &euro;
+                                            </p>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <div class="mt-3 border-t border-slate-100 pt-3 flex items-center justify-between">
+                                    <span class="text-sm text-slate-500">Total</span>
+                                    <span class="text-sm font-semibold text-slate-900">{{ number_format((float) $cartTotal, 2, ',', '.') }} &euro;</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Dropdown de perfil e ações da conta --}}
                 <div class="ms-3 relative">
@@ -284,6 +363,10 @@
                                 <x-dropdown-link href="{{ route('cidadao.reviews.index') }}" class="rounded-xl px-3 py-2.5 font-medium">
                                     Meus Reviews
                                 </x-dropdown-link>
+
+                                <x-dropdown-link href="{{ route('cidadao.encomendas.index') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isCidadaoEncomendas ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
+                                    Minhas Encomendas
+                                </x-dropdown-link>
                             @endif
 
                             {{-- Links de administração para admin --}}
@@ -298,6 +381,10 @@
 
                                 <x-dropdown-link href="{{ route('admin.reviews.index') }}" class="rounded-xl px-3 py-2.5 font-medium {{ request()->routeIs('admin.reviews.*') ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
                                     Gerir Reviews
+                                </x-dropdown-link>
+
+                                <x-dropdown-link href="{{ route('admin.encomendas.index') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isAdminEncomendas ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
+                                    Encomendas
                                 </x-dropdown-link>
                             @endif
 
@@ -356,13 +443,28 @@
                 @endauth
 
                 {{-- Link para autores (mobile) --}}
-                <a href="{{ route('autores.index') }}"
-                    class="flex flex-col items-center justify-center gap-1 transition {{ $isAutores ? 'text-sky-600' : 'text-slate-500' }}"
-                    aria-label="Autores">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.5a6.75 6.75 0 1 0-6 0M3.75 20.25a8.25 8.25 0 0 1 16.5 0" />
-                    </svg>
-                </a>
+                @if (auth()->check() && auth()->user()->role === 'cidadao' && $cartSchemaReady)
+                    <a href="{{ route('carrinho.index') }}"
+                        class="relative flex flex-col items-center justify-center gap-1 transition {{ $isCarrinho ? 'text-sky-600' : 'text-slate-500' }}"
+                        aria-label="Carrinho">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386a1.5 1.5 0 0 1 1.464 1.175L5.4 5.5m0 0h13.95a.75.75 0 0 1 .73.923l-1.2 5.25a.75.75 0 0 1-.73.577H7.05m-1.65-6.75 1.65 6.75m0 0a2.25 2.25 0 1 0 0 4.5h9.9a2.25 2.25 0 1 0 0-4.5H7.05Z" />
+                        </svg>
+                        @if ($cartCount > 0)
+                            <span class="absolute -top-1 -right-1 min-w-[1.15rem] h-[1.15rem] px-1 rounded-full bg-rose-600 text-white text-[10px] leading-[1.15rem] font-bold text-center shadow-md ring-2 ring-white">
+                                {{ $cartCount > 9 ? '9+' : $cartCount }}
+                            </span>
+                        @endif
+                    </a>
+                @else
+                    <a href="{{ route('autores.index') }}"
+                        class="flex flex-col items-center justify-center gap-1 transition {{ $isAutores ? 'text-sky-600' : 'text-slate-500' }}"
+                        aria-label="Autores">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.5a6.75 6.75 0 1 0-6 0M3.75 20.25a8.25 8.25 0 0 1 16.5 0" />
+                        </svg>
+                    </a>
+                @endif
 
                 {{-- Botão central para livros (mobile), com destaque visual --}}
                 <a href="{{ route('livros.index') }}"
@@ -396,6 +498,17 @@
                     <div></div>
                 @endauth
             </div>
+
+            @auth
+                @if (auth()->user()->role === 'cidadao')
+                    <div class="absolute -top-11 right-2">
+                        <a href="{{ route('cidadao.encomendas.index') }}"
+                            class="px-3 py-1.5 text-xs font-semibold rounded-full border transition {{ $isCidadaoEncomendas ? 'bg-sky-100 text-sky-700 border-sky-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+                            Encomendas
+                        </a>
+                    </div>
+                @endif
+            @endauth
         </div>
     </div>
 </nav>
