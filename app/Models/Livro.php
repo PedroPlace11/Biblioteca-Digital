@@ -92,6 +92,12 @@ class Livro extends Model
         return $this->hasMany(AlertaDisponibilidadeLivro::class);
     }
 
+    // Relacao 1:N com itens de encomenda que referenciam este livro.
+    public function encomendaItens()
+    {
+        return $this->hasMany(EncomendaItem::class);
+    }
+
     /**
      * Retorna livros relacionados com base em palavras-chave da descrição (bibliografia).
      * Exclui o próprio livro da lista.
