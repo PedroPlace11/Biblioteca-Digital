@@ -50,6 +50,24 @@
         {{-- Exibe a tabela de editoras se houver resultados --}}
         @if ($editoras->count() > 0)
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="mb-4 flex justify-end">
+                    <button
+                        type="button"
+                        id="editoras-view-toggle"
+                        data-view="list"
+                        class="btn btn-ghost btn-md px-3 min-h-11 border-0 shadow-none hover:bg-gray-100"
+                        aria-label="Alternar visualizacao entre lista e cards"
+                        title="Alternar visualizacao"
+                    >
+                        <span id="editoras-view-toggle-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+
+                <div id="editoras-list-view">
                 <div class="overflow-x-auto">
                     <table class="table w-full text-sm">
                         <thead>
@@ -110,6 +128,55 @@
                         </tbody>
                     </table>
                 </div>
+                </div>
+
+                <div id="editoras-cards-view" class="hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        @foreach ($editoras as $editora)
+                            <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+                                <div class="flex gap-4">
+                                    <div class="shrink-0">
+                                        @if ($editora->logotipo)
+                                            <img src="{{ asset($editora->logotipo) }}" class="w-16 h-16 object-contain rounded-md border border-gray-200 bg-white p-1">
+                                        @else
+                                            <div class="w-16 h-16 rounded-md bg-gray-100 flex items-center justify-center text-gray-500 font-semibold text-lg">
+                                                {{ strtoupper(substr($editora->nome, 0, 1)) }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <a href="{{ route('editoras.show', $editora) }}" class="text-xl leading-tight text-gray-900 font-semibold hover:underline line-clamp-2">
+                                            {{ $editora->nome }}
+                                        </a>
+                                        <p class="text-sm text-gray-500 mt-1">{{ $editora->livros->count() }} livro(s) publicado(s)</p>
+
+                                        <div class="mt-3 text-sm text-gray-700">
+                                            @if ($editora->livros->count() > 0)
+                                                @foreach ($editora->livros->take(4) as $livro)
+                                                    @if (!$loop->first)
+                                                        <span class="text-gray-300">|</span>
+                                                    @endif
+                                                    <a href="{{ route('livros.show', $livro) }}" class="hover:underline">{{ $livro->nome }}</a>
+                                                @endforeach
+                                                @if ($editora->livros->count() > 4)
+                                                    <span class="text-xs text-gray-400">+{{ $editora->livros->count() - 4 }}</span>
+                                                @endif
+                                            @else
+                                                <span class="text-gray-400">Sem livros vinculados</span>
+                                            @endif
+                                        </div>
+
+                                        @if ($isAdmin)
+                                            <div class="mt-4">
+                                                <a href="{{ route('editoras.edit', $editora) }}" class="btn btn-sm btn-outline">Editar</a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
             </div>
         {{-- Caso não haja editoras, exibe mensagem amigável --}}
         @else
@@ -135,6 +202,55 @@
         </div>
         @endif
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var toggleBtn = document.getElementById('editoras-view-toggle');
+            var toggleIcon = document.getElementById('editoras-view-toggle-icon');
+            var listView = document.getElementById('editoras-list-view');
+            var cardsView = document.getElementById('editoras-cards-view');
+
+            if (!toggleBtn || !toggleIcon || !listView || !cardsView) {
+                return;
+            }
+
+            function iconFor(view) {
+                if (view === 'cards') {
+                    return '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>';
+                }
+
+                return '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>';
+            }
+
+            function setView(view) {
+                if (view === 'cards') {
+                    listView.classList.add('hidden');
+                    cardsView.classList.remove('hidden');
+                    toggleBtn.dataset.view = 'cards';
+                    toggleBtn.setAttribute('aria-label', 'Mudar para modo lista');
+                    toggleBtn.setAttribute('title', 'Mudar para modo lista');
+                    toggleIcon.innerHTML = iconFor('cards');
+                } else {
+                    cardsView.classList.add('hidden');
+                    listView.classList.remove('hidden');
+                    toggleBtn.dataset.view = 'list';
+                    toggleBtn.setAttribute('aria-label', 'Mudar para modo cards');
+                    toggleBtn.setAttribute('title', 'Mudar para modo cards');
+                    toggleIcon.innerHTML = iconFor('list');
+                }
+
+                window.localStorage.setItem('editoras_view_mode', view);
+            }
+
+            var savedView = window.localStorage.getItem('editoras_view_mode');
+            setView(savedView === 'cards' ? 'cards' : 'list');
+
+            toggleBtn.addEventListener('click', function () {
+                var currentView = toggleBtn.dataset.view;
+                setView(currentView === 'list' ? 'cards' : 'list');
+            });
+        });
+    </script>
 </x-app-layout>
 
 

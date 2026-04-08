@@ -135,44 +135,46 @@
                         </div>
                     </aside>
 
-                    <aside class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <h2 class="text-xl font-semibold text-slate-900">Gestão do estado</h2>
-                        <p class="mt-1 text-sm text-slate-500">Sessão Stripe e ações administrativas.</p>
+                    @if (!in_array($encomenda->estado, ['enviado', 'pagamento_recusado'], true))
+                        <aside class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <h2 class="text-xl font-semibold text-slate-900">Gestão do estado</h2>
+                            <p class="mt-1 text-sm text-slate-500">Sessão Stripe e ações administrativas.</p>
 
-                        <div class="mt-5 space-y-3 text-slate-700 text-sm">
-                            <p><span class="font-semibold">Sessão Stripe:</span></p>
-                            <p class="text-xs break-all text-slate-600">{{ $encomenda->stripe_checkout_session_id ?? '-' }}</p>
-                        </div>
+                            <div class="mt-5 space-y-3 text-slate-700 text-sm">
+                                <p><span class="font-semibold">Sessão Stripe:</span></p>
+                                <p class="text-xs break-all text-slate-600">{{ $encomenda->stripe_checkout_session_id ?? '-' }}</p>
+                            </div>
 
-                        <div class="mt-5 space-y-3">
-                            <form method="POST" action="{{ route('admin.encomendas.pagamento', $encomenda) }}">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="acao" value="enviar">
-                                <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-sky-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2">
-                                    Confirmar envio
-                                </button>
-                            </form>
+                            <div class="mt-5 space-y-3">
+                                <form method="POST" action="{{ route('admin.encomendas.pagamento', $encomenda) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="acao" value="enviar">
+                                    <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-sky-600 to-blue-700 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:from-sky-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2">
+                                        Confirmar envio
+                                    </button>
+                                </form>
 
-                            <form method="POST" action="{{ route('admin.encomendas.pagamento', $encomenda) }}">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="acao" value="pendente">
-                                <button type="submit" class="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2">
-                                    Voltar para pendente
-                                </button>
-                            </form>
+                                <form method="POST" action="{{ route('admin.encomendas.pagamento', $encomenda) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="acao" value="pendente">
+                                    <button type="submit" class="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2">
+                                        Voltar para pendente
+                                    </button>
+                                </form>
 
-                            <form method="POST" action="{{ route('admin.encomendas.pagamento', $encomenda) }}">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="acao" value="recusado">
-                                <button type="submit" class="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2">
-                                    Recusar pagamento
-                                </button>
-                            </form>
-                        </div>
-                    </aside>
+                                <form method="POST" action="{{ route('admin.encomendas.pagamento', $encomenda) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="acao" value="recusado">
+                                    <button type="submit" class="w-full rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2">
+                                        Recusar pagamento
+                                    </button>
+                                </form>
+                            </div>
+                        </aside>
+                    @endif
                 </div>
             </section>
         </div>

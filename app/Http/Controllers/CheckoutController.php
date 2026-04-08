@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Carrinho;
 use App\Models\Encomenda;
+use App\Models\Morada;
 use App\Notifications\EncomendaCriadaNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,8 +18,9 @@ use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
-    public function morada(): View|RedirectResponse
+    public function morada(Request $request): View|RedirectResponse
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
         abort_unless($user && $user->role === 'cidadao', 403);
@@ -31,18 +33,44 @@ class CheckoutController extends Controller
         }
 
         $total = $itens->sum(fn ($item) => $item->subtotal);
+        $moradas = Morada::query()
+            ->where('user_id', $user->id)
+            ->latest('id')
+            ->get();
         $dadosMorada = session('checkout.morada', []);
+        $preenchimentoManual = $request->has('morada_id') && trim((string) $request->query('morada_id')) === '';
+        $moradaSelecionadaId = (int) $request->query('morada_id', 0);
 
-        return view('checkout.morada', compact('itens', 'total', 'dadosMorada'));
+        if ($preenchimentoManual) {
+            $dadosMorada = [];
+            $moradaSelecionadaId = 0;
+        } elseif ($moradaSelecionadaId > 0) {
+            $moradaSelecionada = $moradas->firstWhere('id', $moradaSelecionadaId);
+
+            if ($moradaSelecionada) {
+                $dadosMorada = $this->converterMoradaParaCheckout($moradaSelecionada);
+            }
+        }
+
+        if (!$preenchimentoManual && empty($dadosMorada) && $moradas->isNotEmpty()) {
+            $moradaPadrao = $moradas->first();
+            $moradaSelecionadaId = (int) $moradaPadrao->id;
+            $dadosMorada = $this->converterMoradaParaCheckout($moradaPadrao);
+        }
+
+        return view('checkout.morada', compact('itens', 'total', 'dadosMorada', 'moradas', 'moradaSelecionadaId', 'preenchimentoManual'));
     }
 
     public function guardarMorada(Request $request): RedirectResponse
     {
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
         abort_unless($user && $user->role === 'cidadao', 403);
 
         $dados = $request->validate([
+            'morada_id' => ['nullable', 'integer'],
+            'titulo' => ['nullable', 'string', 'max:80'],
             'nome_destinatario' => ['required', 'string', 'max:255'],
             'telemovel_destinatario' => ['required', 'string', 'max:40'],
             'morada_linha_1' => ['required', 'string', 'max:255'],
@@ -53,8 +81,48 @@ class CheckoutController extends Controller
         ]);
 
         $dados['pais'] = strtoupper($dados['pais']);
+        $moradaId = (int) ($dados['morada_id'] ?? 0);
 
-        session(['checkout.morada' => $dados]);
+        unset($dados['morada_id']);
+
+        $moradaGuardada = null;
+
+        if ($moradaId > 0) {
+            $moradaGuardada = Morada::query()
+                ->where('user_id', $user->id)
+                ->where('id', $moradaId)
+                ->first();
+
+            if ($moradaGuardada) {
+                $moradaGuardada->update($dados);
+            }
+        }
+
+        if (!$moradaGuardada) {
+            $moradaGuardada = Morada::query()->where([
+                'user_id' => $user->id,
+                'titulo' => $dados['titulo'] ?? null,
+                'nome_destinatario' => $dados['nome_destinatario'],
+                'telemovel_destinatario' => $dados['telemovel_destinatario'],
+                'morada_linha_1' => $dados['morada_linha_1'],
+                'morada_linha_2' => $dados['morada_linha_2'] ?? null,
+                'codigo_postal' => $dados['codigo_postal'],
+                'cidade' => $dados['cidade'],
+                'pais' => $dados['pais'],
+            ])->first();
+
+            if (!$moradaGuardada) {
+                $moradaGuardada = Morada::create([
+                    'user_id' => $user->id,
+                    ...$dados,
+                ]);
+            }
+        }
+
+        session([
+            'checkout.morada' => $dados,
+            'checkout.morada_id' => $moradaGuardada->id,
+        ]);
 
         return redirect()->route('checkout.pagamento');
     }
@@ -320,6 +388,7 @@ class CheckoutController extends Controller
             }
 
             session()->forget('checkout.morada');
+            session()->forget('checkout.morada_id');
         }
 
         return view('checkout.sucesso', compact('encomenda'));
@@ -332,5 +401,18 @@ class CheckoutController extends Controller
         } while (Encomenda::where('numero_rastreio', $codigo)->exists());
 
         return $codigo;
+    }
+
+    private function converterMoradaParaCheckout(Morada $morada): array
+    {
+        return [
+            'nome_destinatario' => $morada->nome_destinatario,
+            'telemovel_destinatario' => $morada->telemovel_destinatario,
+            'morada_linha_1' => $morada->morada_linha_1,
+            'morada_linha_2' => $morada->morada_linha_2,
+            'codigo_postal' => $morada->codigo_postal,
+            'cidade' => $morada->cidade,
+            'pais' => $morada->pais,
+        ];
     }
 }

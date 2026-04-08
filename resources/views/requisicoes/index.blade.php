@@ -120,6 +120,24 @@
         {{-- Tabela de livros disponíveis para requisição --}}
         @if ($livros->count() > 0)
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="mb-4 flex justify-end">
+                    <button
+                        type="button"
+                        id="requisicoes-view-toggle"
+                        data-view="list"
+                        class="btn btn-ghost btn-md px-3 min-h-11 border-0 shadow-none hover:bg-gray-100"
+                        aria-label="Alternar visualizacao entre lista e cards"
+                        title="Alternar visualizacao"
+                    >
+                        <span id="requisicoes-view-toggle-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+
+                <div id="requisicoes-list-view">
                 <div class="overflow-x-auto">
                     <table class="table w-full text-sm">
                         <thead>
@@ -175,6 +193,50 @@
                         </tbody>
                     </table>
                 </div>
+                </div>
+
+                <div id="requisicoes-cards-view" class="hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        @foreach ($livros as $livro)
+                            @php
+                                $indisponivel = ($livro->requisicoes_count ?? 0) > 0;
+                            @endphp
+                            <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+                                <div class="flex gap-4">
+                                    <div class="shrink-0">
+                                        @if ($livro->imagem_capa)
+                                            <img src="{{ asset($livro->imagem_capa) }}" class="w-20 h-28 object-cover rounded-md border border-gray-100">
+                                        @else
+                                            <div class="w-20 h-28 bg-gray-100 rounded-md flex items-center justify-center text-xs text-gray-400">—</div>
+                                        @endif
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <a href="{{ route('livros.show', $livro) }}" class="text-xl leading-tight text-gray-900 font-semibold hover:underline line-clamp-2">
+                                            {{ $livro->nome }}
+                                        </a>
+                                        <p class="text-sm text-gray-700 mt-1">
+                                            @foreach ($livro->autores as $autor)
+                                                {{ $autor->nome }}@if (!$loop->last), @endif
+                                            @endforeach
+                                        </p>
+                                        <p class="text-sm text-gray-600 mt-2">{{ $livro->editora?->nome ?? '-' }}</p>
+                                        <div class="mt-3">
+                                            @if ($indisponivel)
+                                                <span class="badge badge-error badge-outline">Indisponível</span>
+                                            @else
+                                                <span class="badge badge-success badge-outline">Disponível</span>
+                                            @endif
+                                        </div>
+                                        <div class="mt-4">
+                                            <a href="{{ route('livros.show', $livro) }}" class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
             </div>
         @else
             {{-- Mensagem exibida quando nenhum livro é encontrado --}}
@@ -200,6 +262,55 @@
         </div>
         @endif
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var toggleBtn = document.getElementById('requisicoes-view-toggle');
+            var toggleIcon = document.getElementById('requisicoes-view-toggle-icon');
+            var listView = document.getElementById('requisicoes-list-view');
+            var cardsView = document.getElementById('requisicoes-cards-view');
+
+            if (!toggleBtn || !toggleIcon || !listView || !cardsView) {
+                return;
+            }
+
+            function iconFor(view) {
+                if (view === 'cards') {
+                    return '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>';
+                }
+
+                return '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>';
+            }
+
+            function setView(view) {
+                if (view === 'cards') {
+                    listView.classList.add('hidden');
+                    cardsView.classList.remove('hidden');
+                    toggleBtn.dataset.view = 'cards';
+                    toggleBtn.setAttribute('aria-label', 'Mudar para modo lista');
+                    toggleBtn.setAttribute('title', 'Mudar para modo lista');
+                    toggleIcon.innerHTML = iconFor('cards');
+                } else {
+                    cardsView.classList.add('hidden');
+                    listView.classList.remove('hidden');
+                    toggleBtn.dataset.view = 'list';
+                    toggleBtn.setAttribute('aria-label', 'Mudar para modo cards');
+                    toggleBtn.setAttribute('title', 'Mudar para modo cards');
+                    toggleIcon.innerHTML = iconFor('list');
+                }
+
+                window.localStorage.setItem('requisicoes_view_mode', view);
+            }
+
+            var savedView = window.localStorage.getItem('requisicoes_view_mode');
+            setView(savedView === 'cards' ? 'cards' : 'list');
+
+            toggleBtn.addEventListener('click', function () {
+                var currentView = toggleBtn.dataset.view;
+                setView(currentView === 'list' ? 'cards' : 'list');
+            });
+        });
+    </script>
 </x-app-layout>
 
 

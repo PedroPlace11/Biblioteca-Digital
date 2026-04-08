@@ -108,6 +108,24 @@
         {{-- Exibe a tabela de livros se houver resultados --}}
         @if ($livros->count() > 0)
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="mb-4 flex justify-end">
+                    <button
+                        type="button"
+                        id="livros-view-toggle"
+                        data-view="list"
+                        class="btn btn-ghost btn-md px-3 min-h-11 border-0 shadow-none hover:bg-gray-100"
+                        aria-label="Alternar visualizacao entre lista e cards"
+                        title="Alternar visualizacao"
+                    >
+                        <span id="livros-view-toggle-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+
+                <div id="livros-list-view">
                 <div class="overflow-x-auto">
                     <table class="table w-full text-sm">
                         <thead>
@@ -192,6 +210,75 @@
                         </tbody>
                     </table>
                 </div>
+                </div>
+
+                <div id="livros-cards-view" class="hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        @foreach ($livros as $livro)
+                            @php
+                                $indisponivel = ($livro->requisicoes_count ?? 0) > 0;
+                            @endphp
+                            <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg animate-[fadeIn_.35s_ease-out_both]" style="animation-delay: {{ $loop->index * 60 }}ms;">
+                                <div class="flex gap-4">
+                                    <div class="group/capa relative shrink-0">
+                                        @if ($livro->imagem_capa)
+                                            <img src="{{ asset($livro->imagem_capa) }}" class="w-28 h-40 object-cover rounded-md border border-gray-100">
+                                        @else
+                                            <div class="w-28 h-40 bg-gray-100 rounded-md flex items-center justify-center text-xs text-gray-400">—</div>
+                                        @endif
+
+                                        @if (!$indisponivel)
+                                            <div class="absolute inset-0 rounded-md bg-black/55 p-2 flex flex-col justify-end gap-2 transition-all duration-300 md:opacity-0 md:translate-y-2 md:pointer-events-none md:group-hover/capa:opacity-100 md:group-hover/capa:translate-y-0 md:group-hover/capa:pointer-events-auto md:focus-within:opacity-100 md:focus-within:translate-y-0 md:focus-within:pointer-events-auto">
+                                                @auth
+                                                    <form action="{{ route('carrinho.adicionar', $livro) }}" method="POST" class="w-full">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-xs w-full bg-black text-white border-black hover:bg-gray-900 hover:text-white">Comprar</button>
+                                                    </form>
+                                                    <form action="{{ route('livros.requisitar', $livro) }}" method="POST" class="w-full">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-xs w-full btn-outline border-white text-white hover:bg-white hover:text-black">Requisitar</button>
+                                                    </form>
+                                                @else
+                                                    <a href="{{ route('login') }}" class="btn btn-xs w-full btn-outline border-white text-white hover:bg-white hover:text-black">Entrar para comprar</a>
+                                                @endauth
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="min-w-0 flex-1 flex flex-col">
+                                        <a href="{{ route('livros.show', $livro) }}" class="text-2xl leading-tight text-gray-900 font-semibold hover:underline line-clamp-2">
+                                            {{ $livro->nome }}
+                                        </a>
+                                        <p class="text-base text-gray-700 mt-1 line-clamp-1">
+                                            @foreach ($livro->autores as $autor)
+                                                {{ $autor->nome }}@if (!$loop->last), @endif
+                                            @endforeach
+                                        </p>
+                                        <p class="text-xs uppercase tracking-wide text-gray-500 mt-3">Portes grátis</p>
+                                        <p class="mt-1 text-3xl font-bold text-black">
+                                            @if (!is_null($livro->preco))
+                                                {{ number_format((float) $livro->preco, 2, ',', '.') }} &euro;
+                                            @else
+                                                -
+                                            @endif
+                                        </p>
+
+                                        <div class="mt-3 flex items-center gap-2">
+                                            <span class="text-xs text-gray-500">ISBN: {{ $livro->isbn ?: '-' }}</span>
+                                            @if ($indisponivel)
+                                                <span class="badge badge-error badge-outline">Indisponível</span>
+                                            @else
+                                                <span class="badge badge-success badge-outline">Disponível</span>
+                                            @endif
+                                        </div>
+
+                                        <p class="text-sm text-gray-600 mt-2">{{ $livro->editora?->nome ?? '-' }}</p>
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
+
                 {{-- Paginação --}}
                 <div class="pagination-custom mt-6">
                     <div class="join grid grid-cols-2 w-56 mx-auto">
@@ -282,6 +369,55 @@
             });
         </script>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var toggleBtn = document.getElementById('livros-view-toggle');
+            var toggleIcon = document.getElementById('livros-view-toggle-icon');
+            var listView = document.getElementById('livros-list-view');
+            var cardsView = document.getElementById('livros-cards-view');
+
+            if (!toggleBtn || !toggleIcon || !listView || !cardsView) {
+                return;
+            }
+
+            function iconFor(view) {
+                if (view === 'cards') {
+                    return '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>';
+                }
+
+                return '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>';
+            }
+
+            function setView(view) {
+                if (view === 'cards') {
+                    listView.classList.add('hidden');
+                    cardsView.classList.remove('hidden');
+                    toggleBtn.dataset.view = 'cards';
+                    toggleBtn.setAttribute('aria-label', 'Mudar para modo lista');
+                    toggleBtn.setAttribute('title', 'Mudar para modo lista');
+                    toggleIcon.innerHTML = iconFor('cards');
+                } else {
+                    cardsView.classList.add('hidden');
+                    listView.classList.remove('hidden');
+                    toggleBtn.dataset.view = 'list';
+                    toggleBtn.setAttribute('aria-label', 'Mudar para modo cards');
+                    toggleBtn.setAttribute('title', 'Mudar para modo cards');
+                    toggleIcon.innerHTML = iconFor('list');
+                }
+
+                window.localStorage.setItem('livros_view_mode', view);
+            }
+
+            var savedView = window.localStorage.getItem('livros_view_mode');
+            setView(savedView === 'cards' ? 'cards' : 'list');
+
+            toggleBtn.addEventListener('click', function () {
+                var currentView = toggleBtn.dataset.view;
+                setView(currentView === 'list' ? 'cards' : 'list');
+            });
+        });
+    </script>
 </x-app-layout>
 
 
