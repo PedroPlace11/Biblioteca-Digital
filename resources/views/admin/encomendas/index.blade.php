@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="p-6 max-w-7xl mx-auto">
         <div class="mb-6">
-            <h1 class="text-3xl font-bold text-slate-900">Encomendas</h1>
+            <h1 class="text-3xl font-bold text-slate-900">Gerir Encomendas</h1>
             <p class="text-slate-500 mt-1">Listagem de encomendas pagas e pendentes de pagamento.</p>
         </div>
 
@@ -60,8 +60,8 @@
                     </div>
 
                     <div class="mt-3 flex justify-end">
-                        <a href="{{ route('admin.encomendas.show', $encomenda) }}" class="btn btn-sm btn-outline">
-                            Ver encomenda
+                        <a href="{{ route('admin.encomendas.show', $encomenda) }}" class="px-2 py-1 rounded bg-black text-white font-bold border border-black text-xs">
+                            Ver
                         </a>
                     </div>
 

@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="p-6 max-w-4xl mx-auto">
         <h1 class="text-3xl font-bold text-slate-900 mb-1">Checkout</h1>
-        <p class="text-slate-500 mb-6">Passo 3 de 3: Pagamento</p>
+        <p class="text-slate-500 mb-6">Pagamento</p>
 
         @if (session('popup_info'))
             <div class="alert alert-info mb-4"><span>{{ session('popup_info') }}</span></div>
@@ -54,6 +54,15 @@
                 <div class="mt-3 flex flex-col gap-2">
                     <a href="{{ route('checkout.morada') }}" class="btn btn-outline w-full">Editar morada</a>
                     <a href="{{ route('carrinho.index') }}" class="btn btn-ghost w-full">Voltar ao carrinho</a>
+                </div>
+
+                <div class="mt-6 border-t border-slate-100 pt-5">
+                    <p class="text-sm font-semibold text-slate-900">Etapas</p>
+                    <ol class="mt-4 space-y-3 text-sm text-slate-600">
+                        <li class="flex items-center gap-3"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">1</span>Carrinho</li>
+                        <li class="flex items-center gap-3"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">2</span>Morada de entrega</li>
+                        <li class="flex items-center gap-3"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">3</span>Pagamento</li>
+                    </ol>
                 </div>
             </div>
         </div>

@@ -11,6 +11,7 @@ use App\Http\Controllers\Cidadao\EncomendaController as CidadaoEncomendaControll
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RequisicaoController;
+use App\Http\Controllers\Cidadao\MoradaController as CidadaoMoradaController;
 use App\Models\Livro;
 use App\Models\Autor;
 use App\Models\Editora;
@@ -104,7 +105,7 @@ Route::middleware([
             $todasRequisicoes = $todasRequisicoesQuery
                 ->orderByDesc('numero_requisicao_seq')
                 ->orderByDesc('id')
-                ->paginate(12)
+                ->paginate(10)
                 ->withQueryString()
                 ->fragment('secao-requisicoes');
 
@@ -254,6 +255,11 @@ use App\Http\Controllers\Cidadao\ReviewController as CidadaoReviewController;
 Route::prefix('conta')->middleware(['auth', 'verified'])->group(function () {
     Route::get('reviews', [CidadaoReviewController::class, 'index'])->name('cidadao.reviews.index');
     Route::get('reviews/{review}', [CidadaoReviewController::class, 'show'])->name('cidadao.reviews.show');
+    Route::get('moradas', [CidadaoMoradaController::class, 'index'])->name('cidadao.moradas.index');
+    Route::get('moradas/{morada}/editar', [CidadaoMoradaController::class, 'edit'])->name('cidadao.moradas.edit');
+    Route::post('moradas', [CidadaoMoradaController::class, 'store'])->name('cidadao.moradas.store');
+    Route::patch('moradas/{morada}', [CidadaoMoradaController::class, 'update'])->name('cidadao.moradas.update');
+    Route::delete('moradas/{morada}', [CidadaoMoradaController::class, 'destroy'])->name('cidadao.moradas.destroy');
     Route::get('encomendas', [CidadaoEncomendaController::class, 'index'])->name('cidadao.encomendas.index');
     Route::get('encomendas/{encomenda}', [CidadaoEncomendaController::class, 'show'])->name('cidadao.encomendas.show');
 });

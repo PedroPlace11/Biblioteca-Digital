@@ -7,6 +7,7 @@
     $isAutores = request()->routeIs('autores.*');
     $isEditoras = request()->routeIs('editoras.*');
     $isProfile = request()->routeIs('profile.show');
+    $isCidadaoMoradas = request()->routeIs('cidadao.moradas.*');
     $isCidadaoEncomendas = request()->routeIs('cidadao.encomendas.*');
     $isAdminsManage = request()->routeIs('admins.index');
     $isAdminsCreate = request()->routeIs('admins.create');
@@ -360,6 +361,10 @@
 
                             {{-- Link para reviews do cidadão --}}
                             @if (Auth::user()->role === 'cidadao')
+                                <x-dropdown-link href="{{ route('cidadao.moradas.index') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isCidadaoMoradas ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
+                                    Gerir Moradas
+                                </x-dropdown-link>
+
                                 <x-dropdown-link href="{{ route('cidadao.reviews.index') }}" class="rounded-xl px-3 py-2.5 font-medium">
                                     Meus Reviews
                                 </x-dropdown-link>
@@ -384,7 +389,7 @@
                                 </x-dropdown-link>
 
                                 <x-dropdown-link href="{{ route('admin.encomendas.index') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isAdminEncomendas ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
-                                    Encomendas
+                                    Gerir Encomendas
                                 </x-dropdown-link>
                             @endif
 

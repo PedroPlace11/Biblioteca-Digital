@@ -3,6 +3,7 @@ namespace App\Models;
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
@@ -159,6 +160,12 @@ class User extends Authenticatable
     public function encomendas()
     {
         return $this->hasMany(Encomenda::class);
+    }
+
+    // Relação 1:N com moradas guardadas pelo cidadão.
+    public function moradas(): HasMany
+    {
+        return $this->hasMany(Morada::class);
     }
 }
 
