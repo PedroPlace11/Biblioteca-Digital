@@ -92,26 +92,52 @@
 
                 <aside class="space-y-4">
                     <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                        <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Resumo</p>
-                        <div class="mt-5 space-y-4">
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="text-sm text-slate-600">Livros no carrinho</span>
-                                <span class="text-sm font-semibold text-slate-900">{{ $itens->count() }}</span>
-                            </div>
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="text-sm text-slate-600">Total</span>
-                                <span class="text-3xl font-semibold text-slate-900">{{ number_format((float) $total, 2, ',', '.') }} &euro;</span>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                         <p class="text-sm font-semibold text-slate-900">Etapas</p>
                         <ol class="mt-4 space-y-3 text-sm text-slate-600">
                             <li class="flex items-center gap-3"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">1</span>Carrinho</li>
                             <li class="flex items-center gap-3"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-xs font-semibold text-sky-700">2</span>Morada de entrega</li>
                             <li class="flex items-center gap-3"><span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-500">3</span>Pagamento</li>
                         </ol>
+                    </section>
+
+                    <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                        <p class="text-sm font-semibold text-slate-900">Resumo</p>
+                        <div class="mt-5 space-y-4">
+                            <div class="space-y-2">
+                                @foreach ($itens as $itemResumo)
+                                    <div class="flex items-start justify-between gap-3">
+                                        <span class="text-sm text-slate-600 leading-snug">{{ $itemResumo->livro?->nome ?? 'Livro removido' }}</span>
+                                        <span class="text-sm font-semibold text-slate-900 whitespace-nowrap">x{{ $itemResumo->quantidade }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="border-t border-slate-100 pt-4 space-y-3">
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-sm text-slate-600">Valor sem IVA</span>
+                                    <span class="text-sm font-semibold text-slate-900">{{ number_format($totais['valor_sem_iva'], 2, ',', '.') }} &euro;</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-sm text-slate-600">IVA (6%)</span>
+                                    <span class="text-sm font-semibold text-slate-900">{{ number_format($totais['valor_iva'], 2, ',', '.') }} &euro;</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-sm text-slate-600">Portes</span>
+                                    <span class="text-sm font-semibold text-slate-900">{{ number_format($totais['portes'], 2, ',', '.') }} &euro;</span>
+                                </div>
+                                @if ($totais['desconto_percentual'] > 0)
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="text-sm text-emerald-700">Desconto (-{{ $totais['desconto_percentual'] }}%)</span>
+                                        <span class="text-sm font-semibold text-emerald-700">-{{ number_format($totais['desconto_valor'], 2, ',', '.') }} &euro;</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="border-t border-slate-100 pt-4 flex items-end justify-between gap-3">
+                                <span class="text-sm font-medium text-slate-600">Total</span>
+                                <span class="text-3xl font-semibold text-slate-900">{{ number_format($totais['total'], 2, ',', '.') }} &euro;</span>
+                            </div>
+                        </div>
                     </section>
                 </aside>
             </div>

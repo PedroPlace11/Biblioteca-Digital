@@ -32,7 +32,7 @@ class CarrinhoAbandonadoNotification extends Notification
         return (new MailMessage)
             ->subject('Precisa de ajuda com a sua encomenda?')
             ->greeting('Olá, ' . ($notifiable->name ?? 'utilizador') . '!')
-            ->line('Detetámos livros no seu carrinho há mais de 1 hora.')
+            ->line('Detetámos livros no seu carrinho há mais de 30 minutos.')
             ->line('Total de livros no carrinho: ' . $quantidadeLivros)
             ->line('Se precisar de apoio para concluir a compra, estamos disponíveis para ajudar.')
             ->action('Retomar compra', route('carrinho.index'))
@@ -48,7 +48,7 @@ class CarrinhoAbandonadoNotification extends Notification
 
         return [
             'title' => 'Carrinho com compra pendente',
-            'message' => 'Tem ' . $quantidadeLivros . ' livro(s) no carrinho há mais de 1 hora. Precisa de ajuda para concluir a encomenda?',
+            'message' => 'Tem ' . $quantidadeLivros . ' livro(s) no carrinho há mais de 30 minutos. Precisa de ajuda para concluir a encomenda?',
             'carrinho_url' => route('carrinho.index'),
             'created_at' => now()->toIso8601String(),
         ];

@@ -281,43 +281,65 @@
                 @if (Auth::user()->role === 'cidadao' && $cartSchemaReady)
                     <div class="ms-3 relative group">
                         <a href="{{ route('carrinho.index') }}"
+                            id="cart-trigger-desktop"
                             class="relative inline-flex items-center justify-center size-9 rounded-full border transition overflow-visible {{ $isCarrinho ? 'border-sky-300 bg-sky-50 text-sky-700' : 'border-slate-200 text-slate-600 hover:bg-slate-100' }}"
                             aria-label="Carrinho">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386a1.5 1.5 0 0 1 1.464 1.175L5.4 5.5m0 0h13.95a.75.75 0 0 1 .73.923l-1.2 5.25a.75.75 0 0 1-.73.577H7.05m-1.65-6.75 1.65 6.75m0 0a2.25 2.25 0 1 0 0 4.5h9.9a2.25 2.25 0 1 0 0-4.5H7.05Z" />
                             </svg>
                             @if ($cartCount > 0)
-                                <span class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] leading-5 font-bold text-center shadow-md ring-2 ring-white">
+                                <span data-cart-badge class="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] leading-5 font-bold text-center shadow-md ring-2 ring-white">
                                     {{ $cartCount > 9 ? '9+' : $cartCount }}
                                 </span>
                             @endif
                         </a>
 
-                        <div class="absolute right-0 top-11 z-50 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl opacity-0 pointer-events-none transition duration-150 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
+                        <div id="cart-dropdown-panel" data-cart-dropdown data-csrf="{{ csrf_token() }}" class="absolute right-0 top-9 z-50 w-80 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl opacity-0 pointer-events-none transition duration-150 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
                             <div class="flex items-center justify-between gap-2">
                                 <p class="text-sm font-semibold text-slate-800">Carrinho</p>
-                                <span class="text-xs text-slate-500">{{ $cartCount }} item(ns)</span>
+                                <span data-cart-count class="text-xs text-slate-500">{{ $cartCount }} item(ns)</span>
                             </div>
 
                             @if ($cartPreviewItems->isEmpty())
-                                <p class="mt-3 text-sm text-slate-500">O carrinho está vazio.</p>
+                                <p data-cart-empty class="mt-3 text-sm text-slate-500">O carrinho está vazio.</p>
+                                <div data-cart-items class="mt-3 hidden"></div>
                             @else
-                                <div class="mt-3 max-h-64 overflow-y-auto divide-y divide-slate-100">
+                                <p data-cart-empty class="mt-3 text-sm text-slate-500 hidden">O carrinho está vazio.</p>
+                                <div data-cart-items class="mt-3 max-h-64 overflow-y-auto divide-y divide-slate-100">
                                     @foreach ($cartPreviewItems as $cartItem)
-                                        <div class="py-2">
-                                            <p class="text-sm font-medium text-slate-800 truncate">{{ $cartItem->livro?->nome ?? 'Livro removido' }}</p>
-                                            <p class="text-xs text-slate-500">
-                                                {{ $cartItem->quantidade }} x {{ number_format((float) $cartItem->preco_unitario, 2, ',', '.') }} &euro;
-                                            </p>
+                                        <div class="py-2 flex items-start justify-between gap-2" data-cart-item-id="{{ $cartItem->id }}">
+                                            <div class="min-w-0">
+                                                @if ($cartItem->livro)
+                                                    <a href="{{ route('livros.show', $cartItem->livro) }}" class="text-sm font-medium text-slate-800 truncate hover:underline block">{{ $cartItem->livro->nome }}</a>
+                                                @else
+                                                    <p class="text-sm font-medium text-slate-800 truncate">Livro removido</p>
+                                                @endif
+                                                <p class="text-xs text-slate-500">
+                                                    {{ $cartItem->quantidade }} x {{ number_format((float) $cartItem->preco_unitario, 2, ',', '.') }} &euro;
+                                                </p>
+                                            </div>
+                                            <form method="POST" action="{{ route('carrinho.remover', $cartItem->id) }}" class="js-remove-from-cart-form shrink-0">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="inline-flex items-center justify-center rounded-lg p-1.5 text-rose-600 transition hover:bg-rose-50" aria-label="Remover {{ $cartItem->livro?->nome ?? 'livro' }} do carrinho">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0C9.91 2.48 9 3.464 9 4.645v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                    </svg>
+                                                </button>
+                                            </form>
                                         </div>
                                     @endforeach
                                 </div>
-
-                                <div class="mt-3 border-t border-slate-100 pt-3 flex items-center justify-between">
-                                    <span class="text-sm text-slate-500">Total</span>
-                                    <span class="text-sm font-semibold text-slate-900">{{ number_format((float) $cartTotal, 2, ',', '.') }} &euro;</span>
-                                </div>
                             @endif
+
+                            <div class="mt-3 border-t border-slate-100 pt-3 flex items-center justify-between">
+                                <span class="text-sm text-slate-500">Total</span>
+                                <span data-cart-total class="text-sm font-semibold text-slate-900">{{ number_format((float) $cartTotal, 2, ',', '.') }} &euro;</span>
+                            </div>
+
+                            <a href="{{ route('carrinho.index') }}" class="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800">
+                                Ver carrinho
+                            </a>
                         </div>
                     </div>
                 @endif
@@ -517,6 +539,216 @@
         </div>
     </div>
 </nav>
+
+@auth
+    @if (Auth::user()->role === 'cidadao')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (window.__cartDropdownEnhancerLoaded) {
+                    return;
+                }
+
+                window.__cartDropdownEnhancerLoaded = true;
+
+                const panel = document.querySelector('[data-cart-dropdown]');
+                if (!panel) {
+                    return;
+                }
+
+                const csrfToken = panel.getAttribute('data-csrf') || '';
+                const countNode = panel.querySelector('[data-cart-count]');
+                const totalNode = panel.querySelector('[data-cart-total]');
+                const itemsNode = panel.querySelector('[data-cart-items]');
+                const emptyNode = panel.querySelector('[data-cart-empty]');
+                const badgeNode = document.querySelector('[data-cart-badge]');
+                const cartTrigger = document.getElementById('cart-trigger-desktop');
+                const cartWrapper = cartTrigger ? cartTrigger.closest('.group') : null;
+                let isPinnedOpen = false;
+
+                const formatEur = (value) => {
+                    const number = Number(value || 0);
+                    return new Intl.NumberFormat('pt-PT', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    }).format(number) + ' €';
+                };
+
+                const showDropdown = () => {
+                    panel.style.opacity = '1';
+                    panel.style.pointerEvents = 'auto';
+                };
+
+                const hideDropdown = () => {
+                    panel.style.opacity = '';
+                    panel.style.pointerEvents = '';
+                };
+
+                if (cartTrigger) {
+                    cartTrigger.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        isPinnedOpen = !isPinnedOpen;
+
+                        if (isPinnedOpen) {
+                            showDropdown();
+                        } else {
+                            hideDropdown();
+                        }
+                    });
+                }
+
+                if (cartWrapper) {
+                    cartWrapper.addEventListener('mouseenter', function () {
+                        showDropdown();
+                    });
+
+                    cartWrapper.addEventListener('mouseleave', function () {
+                        if (!isPinnedOpen) {
+                            hideDropdown();
+                        }
+                    });
+                }
+
+                document.addEventListener('click', function (event) {
+                    if (!isPinnedOpen || !cartWrapper) {
+                        return;
+                    }
+
+                    const target = event.target;
+                    if (target instanceof Node && cartWrapper.contains(target)) {
+                        return;
+                    }
+
+                    isPinnedOpen = false;
+                    hideDropdown();
+                });
+
+                const refreshBadge = (count) => {
+                    if (!cartTrigger) {
+                        return;
+                    }
+
+                    if (count <= 0) {
+                        if (badgeNode) {
+                            badgeNode.remove();
+                        }
+                        return;
+                    }
+
+                    const label = count > 9 ? '9+' : String(count);
+                    if (badgeNode) {
+                        badgeNode.textContent = label;
+                        return;
+                    }
+
+                    const span = document.createElement('span');
+                    span.setAttribute('data-cart-badge', '1');
+                    span.className = 'absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] leading-5 font-bold text-center shadow-md ring-2 ring-white';
+                    span.textContent = label;
+                    cartTrigger.appendChild(span);
+                };
+
+                const itemHtml = (item) => {
+                    const title = item.nome || 'Livro removido';
+                    const showUrl = item.show_url || '';
+                    const qty = Number(item.quantidade || 0);
+                    const unit = formatEur(item.preco_unitario || 0);
+                    const removeUrl = item.remove_url || '#';
+                    const titleHtml = showUrl
+                        ? `<a href="${showUrl}" class="text-sm font-medium text-slate-800 truncate hover:underline block">${title}</a>`
+                        : `<p class="text-sm font-medium text-slate-800 truncate">${title}</p>`;
+
+                    return `
+                        <div class="py-2 flex items-start justify-between gap-2" data-cart-item-id="${item.id}">
+                            <div class="min-w-0">
+                                ${titleHtml}
+                                <p class="text-xs text-slate-500">${qty} x ${unit}</p>
+                            </div>
+                            <form method="POST" action="${removeUrl}" class="js-remove-from-cart-form shrink-0">
+                                <input type="hidden" name="_token" value="${csrfToken}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="inline-flex items-center justify-center rounded-lg p-1.5 text-rose-600 transition hover:bg-rose-50" aria-label="Remover livro do carrinho">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0C9.91 2.48 9 3.464 9 4.645v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    `;
+                };
+
+                const updateCartDropdown = (cart) => {
+                    if (!cart || !countNode || !totalNode || !itemsNode || !emptyNode) {
+                        return;
+                    }
+
+                    const count = Number(cart.count || 0);
+                    const items = Array.isArray(cart.items) ? cart.items : [];
+
+                    countNode.textContent = `${count} item(ns)`;
+                    totalNode.textContent = formatEur(cart.total || 0);
+                    refreshBadge(count);
+
+                    if (items.length === 0) {
+                        itemsNode.classList.add('hidden');
+                        itemsNode.innerHTML = '';
+                        emptyNode.classList.remove('hidden');
+                    } else {
+                        itemsNode.classList.remove('hidden');
+                        itemsNode.innerHTML = items.map(itemHtml).join('');
+                        emptyNode.classList.add('hidden');
+                    }
+
+                    isPinnedOpen = true;
+                    showDropdown();
+                };
+
+                const sendCartRequest = async (url, formData) => {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                        body: formData,
+                        credentials: 'same-origin',
+                    });
+
+                    const data = await response.json().catch(() => null);
+
+                    if (!response.ok || !data || !data.success) {
+                        throw new Error((data && data.message) ? data.message : 'Erro ao atualizar carrinho.');
+                    }
+
+                    return data;
+                };
+
+                document.addEventListener('submit', async function (event) {
+                    const form = event.target;
+                    if (!(form instanceof HTMLFormElement)) {
+                        return;
+                    }
+
+                    const isAddForm = form.matches('.js-add-to-cart-form') || (form.getAttribute('action') || '').includes('/carrinho/adicionar/');
+                    const isRemoveForm = form.matches('.js-remove-from-cart-form');
+
+                    if (!isAddForm && !isRemoveForm) {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    try {
+                        const data = await sendCartRequest(form.action, new FormData(form));
+                        updateCartDropdown(data.cart || null);
+                    } catch (error) {
+                        console.error(error);
+                        form.submit();
+                    }
+                }, true);
+            });
+        </script>
+    @endif
+@endauth
 
 
 

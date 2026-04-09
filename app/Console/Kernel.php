@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Processa lembretes de carrinho abandonado em intervalos curtos.
-        $schedule->command('carrinho:notificar-abandonados')->everyTenMinutes();
+        $schedule->command('carrinho:notificar-abandonados')->everyFiveMinutes();
     }
 
     /**

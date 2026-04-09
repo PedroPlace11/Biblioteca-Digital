@@ -105,7 +105,7 @@
                                 @else
                                     <div class="flex items-center gap-2">
                                         @if (auth()->user()->role === 'cidadao')
-                                            <form action="{{ route('carrinho.adicionar', $livro) }}" method="POST">
+                                            <form action="{{ route('carrinho.adicionar', $livro) }}" method="POST" class="js-add-to-cart-form">
                                                 @csrf
                                                 <button type="submit" class="btn btn-outline border-slate-400 text-slate-700 hover:bg-slate-50">
                                                     Adicionar ao carrinho
