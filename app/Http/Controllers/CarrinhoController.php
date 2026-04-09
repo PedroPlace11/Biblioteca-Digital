@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Carrinho;
 use App\Models\Livro;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,7 @@ class CarrinhoController extends Controller
         return view('carrinho.index', compact('carrinho', 'itens', 'total'));
     }
 
-    public function adicionar(Livro $livro): RedirectResponse
+    public function adicionar(Request $request, Livro $livro): RedirectResponse|JsonResponse
     {
         $user = Auth::user();
 
@@ -44,6 +45,13 @@ class CarrinhoController extends Controller
         $preco = (float) ($livro->preco ?? 0);
 
         if ($preco <= 0) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Este livro não tem preço válido para compra.',
+                ], 422);
+            }
+
             return redirect()->back()->with('popup_info', 'Este livro não tem preço válido para compra.');
         }
 
@@ -52,6 +60,14 @@ class CarrinhoController extends Controller
         $item->save();
 
         $this->registarAtividadeCarrinho($carrinho);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Livro adicionado ao carrinho.',
+                'cart' => $this->obterResumoCarrinho($carrinho),
+            ]);
+        }
 
         return redirect()->route('carrinho.index')->with('popup_success', 'Livro adicionado ao carrinho.');
     }
@@ -77,7 +93,7 @@ class CarrinhoController extends Controller
         return redirect()->route('carrinho.index')->with('popup_success', 'Quantidade atualizada.');
     }
 
-    public function remover(int $itemId): RedirectResponse
+    public function remover(Request $request, int $itemId): RedirectResponse|JsonResponse
     {
         $user = Auth::user();
 
@@ -90,6 +106,14 @@ class CarrinhoController extends Controller
         if ($item) {
             $item->delete();
             $this->registarAtividadeCarrinho($carrinho);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Livro removido do carrinho.',
+                'cart' => $this->obterResumoCarrinho($carrinho),
+            ]);
         }
 
         return redirect()->route('carrinho.index')->with('popup_success', 'Livro removido do carrinho.');
@@ -119,5 +143,27 @@ class CarrinhoController extends Controller
         $carrinho->lembrete_abandono_enviado_em = null;
         $carrinho->save();
         $carrinho->touch();
+    }
+
+    private function obterResumoCarrinho(Carrinho $carrinho): array
+    {
+        $itens = $carrinho->itens()
+            ->with('livro')
+            ->orderByDesc('id')
+            ->get();
+
+        return [
+            'count' => (int) $itens->sum('quantidade'),
+            'total' => (float) $itens->sum(fn ($item) => (float) $item->subtotal),
+            'items' => $itens->take(5)->map(fn ($item) => [
+                'id' => (int) $item->id,
+                'nome' => (string) ($item->livro?->nome ?? 'Livro removido'),
+                'show_url' => $item->livro ? route('livros.show', $item->livro) : null,
+                'quantidade' => (int) $item->quantidade,
+                'preco_unitario' => (float) $item->preco_unitario,
+                'remove_url' => route('carrinho.remover', $item->id),
+            ])->values()->all(),
+            'view_url' => route('carrinho.index'),
+        ];
     }
 }

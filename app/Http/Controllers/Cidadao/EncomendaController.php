@@ -17,13 +17,15 @@ class EncomendaController extends Controller
         abort_unless($user && $user->role === 'cidadao', 403);
 
         $estado = (string) $request->query('estado', 'todas');
+        $estadosPermitidosNaListagem = ['paga', 'enviado'];
 
-        if (!in_array($estado, ['todas', 'pendente_pagamento', 'paga', 'enviado', 'pagamento_recusado'], true)) {
+        if (!in_array($estado, ['todas', 'paga', 'enviado'], true)) {
             $estado = 'todas';
         }
 
         $query = Encomenda::with('itens')
             ->where('user_id', $user->id)
+            ->whereIn('estado', $estadosPermitidosNaListagem)
             ->orderByDesc('created_at');
 
         if ($estado !== 'todas') {

@@ -233,6 +233,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/checkout/morada', [CheckoutController::class, 'morada'])->name('checkout.morada');
     Route::post('/checkout/morada', [CheckoutController::class, 'guardarMorada'])->name('checkout.morada.guardar');
+    Route::post('/checkout/promocao', [CheckoutController::class, 'atualizarCodigoPromocional'])->name('checkout.promocao');
     Route::get('/checkout/pagamento', [CheckoutController::class, 'pagamento'])->name('checkout.pagamento');
     Route::get('/checkout/pagamento/stripe', function () {
         return redirect()->route('checkout.pagamento')

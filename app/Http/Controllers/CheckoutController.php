@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Carrinho;
 use App\Models\Encomenda;
 use App\Models\Morada;
+use App\Models\User;
 use App\Notifications\EncomendaCriadaNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,9 @@ use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
+    private const CODIGO_PROMOCIONAL = 'PPLACE20';
+    private const DESCONTO_PROMOCIONAL_PERCENTUAL = 20;
+
     public function morada(Request $request): View|RedirectResponse
     {
         /** @var \App\Models\User|null $user */
@@ -32,7 +36,11 @@ class CheckoutController extends Controller
             return redirect()->route('carrinho.index')->with('popup_info', 'Adicione livros ao carrinho antes de avançar.');
         }
 
-        $total = $itens->sum(fn ($item) => $item->subtotal);
+        $subtotal = (float) $itens->sum(fn ($item) => $item->subtotal);
+        $quantidadeItens = (int) $itens->sum('quantidade');
+        $promocaoAtiva = $this->obterPromocaoValidaDaSessao();
+        $totais = $this->calcularTotaisComPromocao($subtotal, $quantidadeItens, $promocaoAtiva);
+        $total = $totais['total'];
         $moradas = Morada::query()
             ->where('user_id', $user->id)
             ->latest('id')
@@ -40,6 +48,7 @@ class CheckoutController extends Controller
         $dadosMorada = session('checkout.morada', []);
         $preenchimentoManual = $request->has('morada_id') && trim((string) $request->query('morada_id')) === '';
         $moradaSelecionadaId = (int) $request->query('morada_id', 0);
+        $moradaSessaoId = (int) session('checkout.morada_id', 0);
 
         if ($preenchimentoManual) {
             $dadosMorada = [];
@@ -53,12 +62,29 @@ class CheckoutController extends Controller
         }
 
         if (!$preenchimentoManual && empty($dadosMorada) && $moradas->isNotEmpty()) {
-            $moradaPadrao = $moradas->first();
+            $moradaPadrao = null;
+
+            if ($moradaSessaoId > 0) {
+                $moradaPadrao = $moradas->firstWhere('id', $moradaSessaoId);
+            }
+
+            if (!$moradaPadrao) {
+                $moradaPadrao = $moradas->first(function (Morada $morada) {
+                    $titulo = mb_strtolower(trim((string) ($morada->titulo ?? '')));
+
+                    return in_array($titulo, ['casa 1', 'casa1'], true);
+                });
+            }
+
+            if (!$moradaPadrao) {
+                $moradaPadrao = $moradas->first();
+            }
+
             $moradaSelecionadaId = (int) $moradaPadrao->id;
             $dadosMorada = $this->converterMoradaParaCheckout($moradaPadrao);
         }
 
-        return view('checkout.morada', compact('itens', 'total', 'dadosMorada', 'moradas', 'moradaSelecionadaId', 'preenchimentoManual'));
+        return view('checkout.morada', compact('itens', 'total', 'totais', 'promocaoAtiva', 'dadosMorada', 'moradas', 'moradaSelecionadaId', 'preenchimentoManual'));
     }
 
     public function guardarMorada(Request $request): RedirectResponse
@@ -127,6 +153,42 @@ class CheckoutController extends Controller
         return redirect()->route('checkout.pagamento');
     }
 
+    public function atualizarCodigoPromocional(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        abort_unless($user && $user->role === 'cidadao', 403);
+
+        $dados = $request->validate([
+            'codigo_promocional' => ['nullable', 'string', 'max:40'],
+        ]);
+
+        $codigo = strtoupper(trim((string) ($dados['codigo_promocional'] ?? '')));
+
+        if ($codigo === '') {
+            session()->forget('checkout.promocao');
+
+            return back();
+        }
+
+        if ($codigo !== self::CODIGO_PROMOCIONAL) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'codigo_promocional' => 'Código promocional inválido.',
+                ]);
+        }
+
+        session([
+            'checkout.promocao' => [
+                'codigo' => self::CODIGO_PROMOCIONAL,
+                'percentual' => self::DESCONTO_PROMOCIONAL_PERCENTUAL,
+            ],
+        ]);
+
+        return back();
+    }
+
     public function pagamento(): View|RedirectResponse
     {
         $user = Auth::user();
@@ -146,9 +208,29 @@ class CheckoutController extends Controller
             return redirect()->route('checkout.morada')->with('popup_info', 'Preencha a morada de entrega antes do pagamento.');
         }
 
-        $total = $itens->sum(fn ($item) => $item->subtotal);
+        $subtotal = (float) $itens->sum(fn ($item) => $item->subtotal);
+        $quantidadeItens = (int) $itens->sum('quantidade');
+        $promocaoAtiva = $this->obterPromocaoValidaDaSessao();
+        $totais = $this->calcularTotaisComPromocao($subtotal, $quantidadeItens, $promocaoAtiva);
+        $total = $totais['total'];
+        $publishableKey = trim((string) config('services.stripe.key'));
 
-        return view('checkout.pagamento', compact('itens', 'total', 'dadosMorada'));
+        if ($publishableKey === '' || !str_starts_with($publishableKey, 'pk_')) {
+            return redirect()->route('checkout.pagamento')->with('popup_info', 'Stripe não configurado corretamente. Defina STRIPE_KEY com chave pública válida.');
+        }
+
+        $encomenda = $this->obterOuCriarEncomendaCheckout($user, $itens, $dadosMorada, $totais, $promocaoAtiva);
+        $clientSecret = $this->criarPaymentIntentCheckout($user, $encomenda, $total);
+
+        if ($clientSecret === '') {
+            return redirect()->route('checkout.pagamento')->with('popup_info', 'Não foi possível preparar o pagamento.');
+        }
+
+        session([
+            'checkout.encomenda_id' => $encomenda->id,
+        ]);
+
+        return view('checkout.pagamento', compact('itens', 'total', 'totais', 'promocaoAtiva', 'dadosMorada', 'clientSecret', 'publishableKey'));
     }
 
     public function criarSessaoStripe(): RedirectResponse
@@ -177,7 +259,11 @@ class CheckoutController extends Controller
         }
 
         $lineItems = [];
-        $total = 0;
+        $subtotal = (float) $itens->sum(fn ($item) => $item->subtotal);
+        $quantidadeItens = (int) $itens->sum('quantidade');
+        $promocaoAtiva = $this->obterPromocaoValidaDaSessao();
+        $totais = $this->calcularTotaisComPromocao($subtotal, $quantidadeItens, $promocaoAtiva);
+        $fatorDesconto = 1 - ($totais['desconto_percentual'] / 100);
 
         foreach ($itens as $item) {
             $precoUnitario = (float) $item->preco_unitario;
@@ -186,21 +272,47 @@ class CheckoutController extends Controller
                 return redirect()->route('checkout.pagamento')->with('popup_info', 'Existem livros no carrinho com preço inválido.');
             }
 
+            $nomeLivro = (string) ($item->livro?->nome ?? 'Livro removido');
+            $autores = trim((string) $item->livro?->autores?->pluck('nome')->join(', '));
+            $descricaoLivro = $autores !== '' ? ('Autor(es): ' . $autores) : null;
+            $imagemLivro = null;
+
+            if (!empty($item->livro?->imagem_capa)) {
+                $imagemLivro = asset($item->livro->imagem_capa);
+            }
+
             $lineItems[] = [
                 'price_data' => [
                     'currency' => 'eur',
                     'product_data' => [
-                        'name' => $item->livro?->nome ?? 'Livro removido',
+                        'name' => $nomeLivro,
+                        'description' => $descricaoLivro,
+                        'image' => $imagemLivro,
                     ],
-                    'unit_amount' => (int) round($precoUnitario * 100),
+                    'unit_amount' => (int) round(($precoUnitario * $fatorDesconto) * 100),
                 ],
                 'quantity' => (int) $item->quantidade,
             ];
-
-            $total += $precoUnitario * (int) $item->quantidade;
         }
 
-        $encomenda = DB::transaction(function () use ($user, $dadosMorada, $itens, $total) {
+        $portes = $totais['portes'];
+        $total = $totais['total'];
+
+        if ($portes > 0) {
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'eur',
+                    'product_data' => [
+                        'name' => 'Portes',
+                        'description' => 'Envio standard',
+                    ],
+                    'unit_amount' => 199,
+                ],
+                'quantity' => 1,
+            ];
+        }
+
+        $encomenda = DB::transaction(function () use ($user, $dadosMorada, $itens, $total, $totais, $promocaoAtiva) {
             $encomenda = Encomenda::create([
                 'user_id' => $user->id,
                 'estado' => 'pendente_pagamento',
@@ -212,6 +324,9 @@ class CheckoutController extends Controller
                 'cidade' => $dadosMorada['cidade'],
                 'pais' => $dadosMorada['pais'],
                 'total' => $total,
+                'codigo_promocional' => $promocaoAtiva['codigo'] ?? null,
+                'desconto_percentual' => $totais['desconto_percentual'],
+                'valor_desconto' => $totais['desconto_valor'],
             ]);
 
             foreach ($itens as $item) {
@@ -235,6 +350,9 @@ class CheckoutController extends Controller
             'mode' => 'payment',
             'success_url' => route('checkout.sucesso') . '?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('checkout.pagamento'),
+            'locale' => 'pt',
+            'submit_type' => 'pay',
+            'customer_email' => (string) $user->email,
             'metadata[encomenda_id]' => (string) $encomenda->id,
             'metadata[user_id]' => (string) $user->id,
         ];
@@ -244,6 +362,14 @@ class CheckoutController extends Controller
             $payload["line_items[{$index}][price_data][currency]"] = $lineItem['price_data']['currency'];
             $payload["line_items[{$index}][price_data][unit_amount]"] = $lineItem['price_data']['unit_amount'];
             $payload["line_items[{$index}][price_data][product_data][name]"] = $lineItem['price_data']['product_data']['name'];
+
+            if (!empty($lineItem['price_data']['product_data']['description'])) {
+                $payload["line_items[{$index}][price_data][product_data][description]"] = $lineItem['price_data']['product_data']['description'];
+            }
+
+            if (!empty($lineItem['price_data']['product_data']['image'])) {
+                $payload["line_items[{$index}][price_data][product_data][images][0]"] = $lineItem['price_data']['product_data']['image'];
+            }
         }
 
         $response = Http::withBasicAuth($chaveStripe, '')
@@ -309,9 +435,10 @@ class CheckoutController extends Controller
         abort_unless($user && $user->role === 'cidadao', 403);
 
         $sessionId = (string) $request->query('session_id', '');
+        $paymentIntentId = (string) $request->query('payment_intent', '');
 
-        if ($sessionId === '') {
-            return redirect()->route('carrinho.index')->with('popup_info', 'Sessão de pagamento inválida.');
+        if ($sessionId === '' && $paymentIntentId === '') {
+            return redirect()->route('carrinho.index')->with('popup_info', 'Pagamento inválido.');
         }
 
         $chaveStripe = trim((string) config('services.stripe.secret'));
@@ -320,29 +447,61 @@ class CheckoutController extends Controller
             return redirect()->route('carrinho.index')->with('popup_info', 'Stripe não configurado.');
         }
 
-        $response = Http::withBasicAuth($chaveStripe, '')
-            ->timeout(15)
-            ->retry(2, 500)
-            ->get("https://api.stripe.com/v1/checkout/sessions/{$sessionId}");
+        $session = [];
+        $paymentIntent = [];
 
-        $session = $response->successful() ? $response->json() : [];
+        if ($sessionId !== '') {
+            $response = Http::withBasicAuth($chaveStripe, '')
+                ->timeout(15)
+                ->retry(2, 500)
+                ->get("https://api.stripe.com/v1/checkout/sessions/{$sessionId}");
 
-        if (!$response->successful()) {
-            Log::warning('Falha ao validar sessão Stripe no retorno', [
-                'session_id' => $sessionId,
-                'status' => $response->status(),
-                'body' => $response->body(),
-                'user_id' => $user->id,
-            ]);
+            $session = $response->successful() ? $response->json() : [];
+
+            if (!$response->successful()) {
+                Log::warning('Falha ao validar sessão Stripe no retorno', [
+                    'session_id' => $sessionId,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'user_id' => $user->id,
+                ]);
+            }
+        }
+
+        if ($paymentIntentId !== '') {
+            $response = Http::withBasicAuth($chaveStripe, '')
+                ->timeout(15)
+                ->retry(2, 500)
+                ->get("https://api.stripe.com/v1/payment_intents/{$paymentIntentId}");
+
+            $paymentIntent = $response->successful() ? $response->json() : [];
+
+            if (!$response->successful()) {
+                Log::warning('Falha ao validar payment intent Stripe no retorno', [
+                    'payment_intent_id' => $paymentIntentId,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'user_id' => $user->id,
+                ]);
+            }
         }
 
         $encomenda = Encomenda::with('itens')
             ->where('user_id', $user->id)
-            ->where('stripe_checkout_session_id', $sessionId)
+            ->when($sessionId !== '', fn ($query) => $query->where('stripe_checkout_session_id', $sessionId))
+            ->when($paymentIntentId !== '', fn ($query) => $query->where('stripe_payment_intent_id', $paymentIntentId))
             ->first();
 
         if (!$encomenda) {
-            $encomendaId = (int) data_get($session, 'metadata.encomenda_id', 0);
+            $encomendaId = (int) data_get($paymentIntent, 'metadata.encomenda_id', 0);
+
+            if ($encomendaId <= 0) {
+                $encomendaId = (int) data_get($session, 'metadata.encomenda_id', 0);
+            }
+
+            if ($encomendaId <= 0) {
+                $encomendaId = (int) session('checkout.encomenda_id', 0);
+            }
 
             if ($encomendaId > 0) {
                 $encomenda = Encomenda::with('itens')
@@ -367,29 +526,36 @@ class CheckoutController extends Controller
             return redirect()->route('carrinho.index')->with('popup_info', 'Não foi possível localizar a encomenda deste pagamento.');
         }
 
-        if (($session['payment_status'] ?? null) === 'paid' || !$response->successful()) {
-            if ($encomenda->estado !== 'enviado') {
-                $encomenda->update([
-                    'estado' => 'enviado',
-                    'stripe_payment_intent_id' => (string) ($session['payment_intent'] ?? ''),
-                    'pago_em' => now(),
-                    'transportadora' => 'CTT',
-                    'numero_rastreio' => $encomenda->numero_rastreio ?: $this->gerarNumeroRastreioCtt(),
-                ]);
-            }
+        $pagamentoConcluido = ($session['payment_status'] ?? null) === 'paid'
+            || ($paymentIntent['status'] ?? null) === 'succeeded';
 
-            $carrinho = Carrinho::where('user_id', $user->id)->first();
-
-            if ($carrinho) {
-                $carrinho->itens()->delete();
-                $carrinho->lembrete_abandono_enviado_em = null;
-                $carrinho->save();
-                $carrinho->touch();
-            }
-
-            session()->forget('checkout.morada');
-            session()->forget('checkout.morada_id');
+        if (!$pagamentoConcluido) {
+            return redirect()->route('checkout.pagamento')->with('popup_info', 'O pagamento ainda não foi concluído.');
         }
+
+        if ($encomenda->estado !== 'enviado') {
+            $encomenda->update([
+                'estado' => 'enviado',
+                'stripe_payment_intent_id' => (string) ($paymentIntent['id'] ?? $session['payment_intent'] ?? $paymentIntentId),
+                'pago_em' => now(),
+                'transportadora' => 'CTT',
+                'numero_rastreio' => $encomenda->numero_rastreio ?: $this->gerarNumeroRastreioCtt(),
+            ]);
+        }
+
+        $carrinho = Carrinho::where('user_id', $user->id)->first();
+
+        if ($carrinho) {
+            $carrinho->itens()->delete();
+            $carrinho->lembrete_abandono_enviado_em = null;
+            $carrinho->save();
+            $carrinho->touch();
+        }
+
+        session()->forget('checkout.morada');
+        session()->forget('checkout.morada_id');
+        session()->forget('checkout.encomenda_id');
+        session()->forget('checkout.promocao');
 
         return view('checkout.sucesso', compact('encomenda'));
     }
@@ -413,6 +579,198 @@ class CheckoutController extends Controller
             'codigo_postal' => $morada->codigo_postal,
             'cidade' => $morada->cidade,
             'pais' => $morada->pais,
+        ];
+    }
+
+    private function obterOuCriarEncomendaCheckout(User $user, $itens, array $dadosMorada, array $totais, ?array $promocaoAtiva): Encomenda
+    {
+        $encomendaId = (int) session('checkout.encomenda_id', 0);
+
+        if ($encomendaId > 0) {
+            $encomendaExistente = Encomenda::query()
+                ->where('id', $encomendaId)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if ($encomendaExistente) {
+                $encomendaExistente->update([
+                    'nome_destinatario' => $dadosMorada['nome_destinatario'],
+                    'telemovel_destinatario' => $dadosMorada['telemovel_destinatario'],
+                    'morada_linha_1' => $dadosMorada['morada_linha_1'],
+                    'morada_linha_2' => $dadosMorada['morada_linha_2'] ?? null,
+                    'codigo_postal' => $dadosMorada['codigo_postal'],
+                    'cidade' => $dadosMorada['cidade'],
+                    'pais' => $dadosMorada['pais'],
+                    'total' => $totais['total'],
+                    'codigo_promocional' => $promocaoAtiva['codigo'] ?? null,
+                    'desconto_percentual' => $totais['desconto_percentual'],
+                    'valor_desconto' => $totais['desconto_valor'],
+                ]);
+
+                $this->sincronizarItensEncomenda($encomendaExistente, $itens);
+
+                return $encomendaExistente;
+            }
+        }
+
+        $encomenda = DB::transaction(function () use ($user, $dadosMorada, $itens, $totais, $promocaoAtiva) {
+            $encomenda = Encomenda::create([
+                'user_id' => $user->id,
+                'estado' => 'pendente_pagamento',
+                'nome_destinatario' => $dadosMorada['nome_destinatario'],
+                'telemovel_destinatario' => $dadosMorada['telemovel_destinatario'],
+                'morada_linha_1' => $dadosMorada['morada_linha_1'],
+                'morada_linha_2' => $dadosMorada['morada_linha_2'] ?? null,
+                'codigo_postal' => $dadosMorada['codigo_postal'],
+                'cidade' => $dadosMorada['cidade'],
+                'pais' => $dadosMorada['pais'],
+                'total' => $totais['total'],
+                'codigo_promocional' => $promocaoAtiva['codigo'] ?? null,
+                'desconto_percentual' => $totais['desconto_percentual'],
+                'valor_desconto' => $totais['desconto_valor'],
+            ]);
+
+            $this->sincronizarItensEncomenda($encomenda, $itens);
+
+            return $encomenda;
+        });
+
+        $admins = \App\Models\User::query()
+            ->where('role', 'admin')
+            ->get();
+
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new EncomendaCriadaNotification($encomenda, $user, ['database']));
+
+            try {
+                Notification::send($admins, new EncomendaCriadaNotification($encomenda, $user, ['mail']));
+            } catch (\Throwable $e) {
+                Log::warning('Falha ao enviar email de nova encomenda', [
+                    'encomenda_id' => $encomenda->id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        session(['checkout.encomenda_id' => $encomenda->id]);
+
+        return $encomenda;
+    }
+
+    private function sincronizarItensEncomenda(Encomenda $encomenda, $itens): void
+    {
+        $encomenda->itens()->delete();
+
+        foreach ($itens as $item) {
+            $quantidade = (int) $item->quantidade;
+            $preco = (float) $item->preco_unitario;
+
+            $encomenda->itens()->create([
+                'livro_id' => $item->livro_id,
+                'livro_nome' => $item->livro?->nome ?? 'Livro removido',
+                'livro_isbn' => $item->livro?->isbn,
+                'quantidade' => $quantidade,
+                'preco_unitario' => $preco,
+                'subtotal' => $preco * $quantidade,
+            ]);
+        }
+    }
+
+    private function criarPaymentIntentCheckout(User $user, Encomenda $encomenda, float $total): string
+    {
+        $chaveStripe = trim((string) config('services.stripe.secret'));
+
+        if ($chaveStripe === '') {
+            return '';
+        }
+
+        $response = Http::withBasicAuth($chaveStripe, '')
+            ->asForm()
+            ->post('https://api.stripe.com/v1/payment_intents', [
+                'amount' => (int) round($total * 100),
+                'currency' => 'eur',
+                'automatic_payment_methods[enabled]' => 'true',
+                'receipt_email' => (string) $user->email,
+                'description' => 'Encomenda #' . $encomenda->id,
+                'metadata[encomenda_id]' => (string) $encomenda->id,
+                'metadata[user_id]' => (string) $user->id,
+            ]);
+
+        if (!$response->successful()) {
+            Log::warning('Falha ao criar payment intent Stripe', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+                'encomenda_id' => $encomenda->id,
+                'user_id' => $user->id,
+            ]);
+
+            return '';
+        }
+
+        $paymentIntent = $response->json();
+        $paymentIntentId = (string) ($paymentIntent['id'] ?? '');
+        $clientSecret = (string) ($paymentIntent['client_secret'] ?? '');
+
+        if ($paymentIntentId === '' || $clientSecret === '') {
+            Log::warning('Resposta inválida ao criar payment intent Stripe', [
+                'encomenda_id' => $encomenda->id,
+                'user_id' => $user->id,
+                'response' => $paymentIntent,
+            ]);
+
+            return '';
+        }
+
+        $encomenda->update([
+            'stripe_payment_intent_id' => $paymentIntentId,
+        ]);
+
+        session(['checkout.payment_intent_id' => $paymentIntentId]);
+
+        return $clientSecret;
+    }
+
+    private function obterPromocaoValidaDaSessao(): ?array
+    {
+        $promocao = session('checkout.promocao');
+
+        if (!is_array($promocao)) {
+            return null;
+        }
+
+        $codigo = strtoupper(trim((string) ($promocao['codigo'] ?? '')));
+        $percentual = (int) ($promocao['percentual'] ?? 0);
+
+        if ($codigo !== self::CODIGO_PROMOCIONAL || $percentual !== self::DESCONTO_PROMOCIONAL_PERCENTUAL) {
+            session()->forget('checkout.promocao');
+
+            return null;
+        }
+
+        return [
+            'codigo' => $codigo,
+            'percentual' => $percentual,
+        ];
+    }
+
+    private function calcularTotaisComPromocao(float $subtotal, int $quantidadeItens, ?array $promocaoAtiva): array
+    {
+        $portes = $subtotal < 50 ? 1.99 : 0.0;
+        $valorSemIva = $subtotal / 1.06;
+        $valorIva = $subtotal - $valorSemIva;
+        $descontoPercentual = $quantidadeItens >= 2 ? (int) ($promocaoAtiva['percentual'] ?? 0) : 0;
+        $descontoValor = $descontoPercentual > 0 ? round($subtotal * ($descontoPercentual / 100), 2) : 0.0;
+        $total = round(max(0, $subtotal - $descontoValor + $portes), 2);
+
+        return [
+            'subtotal_com_iva' => $subtotal,
+            'valor_sem_iva' => $valorSemIva,
+            'valor_iva' => $valorIva,
+            'portes' => $portes,
+            'desconto_percentual' => $descontoPercentual,
+            'desconto_valor' => $descontoValor,
+            'total' => $total,
         ];
     }
 }

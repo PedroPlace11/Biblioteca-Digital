@@ -23,6 +23,9 @@ class Encomenda extends Model
         'cidade',
         'pais',
         'total',
+        'codigo_promocional',
+        'desconto_percentual',
+        'valor_desconto',
         'stripe_checkout_session_id',
         'stripe_payment_intent_id',
         'transportadora',
@@ -34,6 +37,8 @@ class Encomenda extends Model
     {
         return [
             'total' => 'decimal:2',
+            'desconto_percentual' => 'integer',
+            'valor_desconto' => 'decimal:2',
             'pago_em' => 'datetime',
         ];
     }

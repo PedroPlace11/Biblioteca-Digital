@@ -3,6 +3,17 @@
         <div class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-sky-50 via-white to-blue-50"></div>
 
         <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
+            @php
+                $baseTotal = (float) $encomenda->itens->sum('subtotal');
+                $valorSemIva = $baseTotal / 1.06;
+                $valorIva = $baseTotal - $valorSemIva;
+                $portes = $baseTotal < 50 ? 1.99 : 0.0;
+                $quantidadeItens = (int) $encomenda->itens->sum('quantidade');
+                $descontoPercentual = (int) ($encomenda->desconto_percentual ?? 0);
+                $descontoValor = (float) ($encomenda->valor_desconto ?? 0);
+                $totalFinal = (float) $encomenda->total;
+            @endphp
+
             <section class="rounded-3xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur p-6 sm:p-8">
                 <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -31,6 +42,7 @@
                 <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
                         <p class="text-xs uppercase tracking-wide text-slate-500">Cliente</p>
+                        <p class="text-sm text-slate-600">N.o leitor: {{ $encomenda->user?->numero_leitor ?? '-' }}</p>
                         <p class="mt-1 font-semibold text-slate-900 truncate">{{ $encomenda->user?->name ?? '-' }}</p>
                         <p class="text-sm text-slate-600 truncate">{{ $encomenda->user?->email ?? '-' }}</p>
                     </div>
@@ -38,15 +50,32 @@
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
                         <p class="text-xs uppercase tracking-wide text-slate-500">Data</p>
                         <p class="mt-1 font-semibold text-slate-900">{{ $encomenda->created_at?->format('d/m/Y H:i') }}</p>
-                        <p class="text-sm text-slate-600">N.o leitor: {{ $encomenda->user?->numero_leitor ?? '-' }}</p>
                     </div>
 
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                        <p class="text-xs uppercase tracking-wide text-slate-500">Total</p>
-                        <p class="mt-1 text-2xl font-semibold text-slate-900">{{ number_format((float) $encomenda->total, 2, ',', '.') }} &euro;</p>
-                        @if (in_array($encomenda->estado, ['paga', 'enviado'], true))
-                            <p class="text-sm text-slate-600">Pago em {{ $encomenda->pago_em?->format('d/m/Y H:i') ?? '-' }}</p>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="text-xs uppercase tracking-wide text-slate-500">Valor sem IVA</p>
+                            <p class="text-sm font-semibold text-slate-900">{{ number_format($valorSemIva, 2, ',', '.') }} &euro;</p>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="text-xs uppercase tracking-wide text-slate-500">IVA (6%)</p>
+                            <p class="text-sm font-semibold text-slate-900">{{ number_format($valorIva, 2, ',', '.') }} &euro;</p>
+                        </div>
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="text-xs uppercase tracking-wide text-slate-500">Portes</p>
+                            <p class="text-sm font-semibold text-slate-900">{{ number_format($portes, 2, ',', '.') }} &euro;</p>
+                        </div>
+                        @if ($descontoPercentual > 0 && $quantidadeItens >= 2)
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-xs uppercase tracking-wide text-emerald-700">-{{ $descontoPercentual }}% de desconto</p>
+                                <p class="text-sm font-semibold text-emerald-700">-{{ number_format($descontoValor, 2, ',', '.') }} &euro;</p>
+                            </div>
                         @endif
+                        <div class="border-t border-slate-100 pt-3 flex items-center justify-between gap-3">
+                            <p class="text-xs uppercase tracking-wide text-slate-500">Total</p>
+                            <p class="text-2xl font-semibold text-slate-900">{{ number_format($totalFinal, 2, ',', '.') }} &euro;</p>
+                        </div>
+
                     </div>
 
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
@@ -61,7 +90,6 @@
                 <div class="lg:col-span-2 rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                     <div class="px-6 pt-6">
                         <h2 class="text-xl font-semibold text-slate-900">Itens da encomenda</h2>
-                        <p class="mt-1 text-sm text-slate-500">Lista dos livros incluídos nesta compra.</p>
                     </div>
 
                     <div class="mt-4 overflow-x-auto">
@@ -69,17 +97,34 @@
                             <thead class="bg-slate-50 text-slate-600">
                                 <tr>
                                     <th class="px-6 py-3 text-left font-semibold">Livro</th>
-                                    <th class="px-6 py-3 text-left font-semibold">ISBN</th>
                                     <th class="px-6 py-3 text-left font-semibold">Qtd</th>
                                     <th class="px-6 py-3 text-left font-semibold">Preço unitário</th>
-                                    <th class="px-6 py-3 text-left font-semibold">Subtotal</th>
+                                    <th class="px-6 py-3 text-left font-semibold">Total</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
                                 @foreach ($encomenda->itens as $item)
                                     <tr class="hover:bg-slate-50/70 transition">
-                                        <td class="px-6 py-4 font-medium text-slate-900">{{ $item->livro_nome }}</td>
-                                        <td class="px-6 py-4">{{ $item->livro_isbn ?? '-' }}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-4">
+                                                <div class="shrink-0 flex items-center justify-center">
+                                                    @if ($item->livro?->imagem_capa)
+                                                        <img src="{{ asset($item->livro->imagem_capa) }}" alt="Capa {{ $item->livro_nome }}" class="h-24 w-16 rounded-md object-cover border border-slate-200 bg-slate-50">
+                                                    @else
+                                                        <div class="h-24 w-16 rounded-md border border-slate-200 bg-slate-100 flex items-center justify-center text-[10px] font-semibold text-slate-400 text-center px-1">
+                                                            Sem capa
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                @if ($item->livro)
+                                                    <a href="{{ route('livros.show', $item->livro) }}" class="font-medium text-slate-900 transition hover:text-sky-700 hover:underline">
+                                                        {{ $item->livro_nome }}
+                                                    </a>
+                                                @else
+                                                    <div class="font-medium text-slate-900">{{ $item->livro_nome }}</div>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td class="px-6 py-4">{{ $item->quantidade }}</td>
                                         <td class="px-6 py-4">{{ number_format((float) $item->preco_unitario, 2, ',', '.') }} &euro;</td>
                                         <td class="px-6 py-4 font-semibold">{{ number_format((float) $item->subtotal, 2, ',', '.') }} &euro;</td>

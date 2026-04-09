@@ -10,11 +10,9 @@
                 <div>
                     <label class="label"><span class="label-text">Estado</span></label>
                     <select name="estado" class="select select-bordered w-full sm:w-56">
-                        <option value="todas" @selected($estado === 'todas')>Todas</option>
-                        <option value="pendente_pagamento" @selected($estado === 'pendente_pagamento')>Pendente pagamento</option>
+                        <option value="todas" @selected($estado === 'todas')>Pagas e finalizadas</option>
                         <option value="paga" @selected($estado === 'paga')>Paga</option>
                         <option value="enviado" @selected($estado === 'enviado')>Enviado</option>
-                        <option value="pagamento_recusado" @selected($estado === 'pagamento_recusado')>Pagamento recusado</option>
                     </select>
                 </div>
 
@@ -27,6 +25,14 @@
 
         <div class="space-y-4">
             @forelse ($encomendas as $encomenda)
+                @php
+                    $subtotal = (float) $encomenda->itens->sum('subtotal');
+                    $portes = $subtotal < 50 ? 1.99 : 0.0;
+                    $quantidadeItens = (int) $encomenda->itens->sum('quantidade');
+                    $descontoPercentual = (int) ($encomenda->desconto_percentual ?? 0);
+                    $descontoValor = (float) ($encomenda->valor_desconto ?? 0);
+                @endphp
+
                 <div class="rounded-2xl border border-slate-200 bg-white p-5">
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
                         <div>
@@ -48,12 +54,27 @@
                             @else
                                 <span class="badge border-amber-500 text-amber-700 bg-amber-50">Pendente pagamento</span>
                             @endif
-                            <p class="text-xl font-bold text-slate-900 mt-2">{{ number_format((float) $encomenda->total, 2, ',', '.') }} &euro;</p>
+                            <div class="mt-2 space-y-1 text-sm text-slate-600">
+                                <div class="flex items-center justify-between gap-4">
+                                    <span>Portes</span>
+                                    <span class="font-semibold text-slate-900">{{ number_format($portes, 2, ',', '.') }} &euro;</span>
+                                </div>
+                                @if ($descontoPercentual > 0 && $quantidadeItens >= 2)
+                                    <div class="flex items-center justify-between gap-4">
+                                        <span class="text-emerald-700">-{{ $descontoPercentual }}% de desconto</span>
+                                        <span class="font-semibold text-emerald-700">-{{ number_format($descontoValor, 2, ',', '.') }} &euro;</span>
+                                    </div>
+                                @endif
+                                <div class="flex items-center justify-between gap-4 pt-1 border-t border-slate-100">
+                                    <span class="font-medium text-slate-700">Total</span>
+                                    <span class="text-xl font-bold text-slate-900">{{ number_format((float) $encomenda->total, 2, ',', '.') }} &euro;</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="mt-3 flex justify-end">
-                        <a href="{{ route('cidadao.encomendas.show', $encomenda) }}" class="btn btn-sm btn-outline">
+                        <a href="{{ route('cidadao.encomendas.show', $encomenda) }}" class="btn btn-sm bg-black text-white border-black hover:bg-neutral-800 hover:text-white">
                             Ver detalhe
                         </a>
                     </div>
