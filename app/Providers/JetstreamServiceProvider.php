@@ -16,7 +16,7 @@ class JetstreamServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Provider sem bindings adicionais no container.
     }
 
     /**
@@ -24,10 +24,13 @@ class JetstreamServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Configura permissoes disponiveis para tokens API do Jetstream.
         $this->configurePermissions();
 
+        // Define acao executada quando um utilizador elimina a propria conta.
         Jetstream::deleteUsersUsing(DeleteUser::class);
 
+        // Ativa prefetch de assets do Vite para melhorar percepcao de desempenho no frontend.
         Vite::prefetch(concurrency: 3);
     }
 
@@ -36,8 +39,10 @@ class JetstreamServiceProvider extends ServiceProvider
      */
     protected function configurePermissions(): void
     {
+        // Permissao padrao aplicada a novos API tokens.
         Jetstream::defaultApiTokenPermissions(['read']);
 
+        // Conjunto completo de permissoes que podem ser atribuidas aos tokens.
         Jetstream::permissions([
             'create',
             'read',

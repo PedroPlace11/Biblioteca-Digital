@@ -9,6 +9,7 @@
     {{-- Conteúdo principal: componente Livewire com criação/revogação de tokens. --}}
     <div>
         <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
+            {{-- Componente responsável por listar, criar, editar permissões e eliminar tokens. --}}
             @livewire('api.api-token-manager')
         </div>
     </div>

@@ -1,6 +1,7 @@
 <x-app-layout>
     <div class="py-8">
         <div class="max-w-md mx-auto">
+                {{-- Wrapper central para manter o formulário focado em telas de gestão. --}}
                 {{-- Estilos locais desta tela de criação de administrador. --}}
                 <style>
                     /* Cartão principal da modal com sombra e cantos arredondados. */
@@ -12,6 +13,7 @@
                     }
 
                     .modal-header {
+                        /* Cabeçalho com título e ação de fechar no mesmo eixo. */
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
@@ -93,6 +95,7 @@
                     }
 
                     .form-actions {
+                        /* Linha de ações com alinhamento à direita para confirmar/cancelar. */
                         display: flex;
                         gap: 1rem;
                         justify-content: flex-end;
@@ -168,16 +171,19 @@
                             @csrf
 
                             <div class="form-group">
+                                {{-- Campo de email do novo administrador. --}}
                                 <label for="email">Email</label>
                                 <input type="email" id="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username">
                             </div>
 
                             <div class="form-group">
+                                {{-- Campo de senha inicial da conta admin. --}}
                                 <label for="password">Senha</label>
                                 <input type="password" id="password" name="password" required autocomplete="new-password">
                             </div>
 
                             <div class="form-group">
+                                {{-- Confirmação de senha para validação de consistência. --}}
                                 <label for="password_confirmation">Confirmar Senha</label>
                                 <input type="password" id="password_confirmation" name="password_confirmation" required autocomplete="new-password">
                             </div>

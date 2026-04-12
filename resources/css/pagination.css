@@ -2,31 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Container principal da paginação: centraliza horizontalmente e cria respiro superior. */
 .pagination-custom {
     @apply flex justify-center mt-6;
 }
+
+/* Wrapper do nav: visual em cápsula com sombra e corte de overflow para cantos arredondados. */
 .pagination-custom nav {
     @apply inline-flex rounded-lg shadow overflow-hidden;
 }
+
+/* Garante que os elementos internos fiquem alinhados em linha única. */
 .pagination-custom nav > div {
     @apply flex;
 }
+
+/* Estado ativo (página atual): alto contraste para facilitar identificação. */
 .pagination-custom span[aria-current],
 .pagination-custom .active {
     @apply bg-black text-white font-bold;
 }
+
+/* Estilo base de links e spans: aparência consistente e transição suave no hover. */
 .pagination-custom a,
 .pagination-custom span {
     @apply px-4 py-2 bg-gray-900 text-gray-200 hover:bg-black hover:text-white transition-colors duration-150 border-r border-gray-800;
 }
+
+/* Primeiro item ganha canto esquerdo arredondado. */
 .pagination-custom a:first-child,
 .pagination-custom span:first-child {
     @apply rounded-l-lg;
 }
+
+/* Último item ganha canto direito arredondado e remove borda final duplicada. */
 .pagination-custom a:last-child,
 .pagination-custom span:last-child {
     @apply rounded-r-lg border-r-0;
 }
+
+/* Estado desativado: reduz contraste e bloqueia interação visualmente. */
 .pagination-custom .disabled,
 .pagination-custom [aria-disabled="true"] {
     @apply opacity-50 cursor-not-allowed bg-gray-800 text-gray-400;

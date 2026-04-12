@@ -1,5 +1,7 @@
 <x-app-layout>
     @php
+        // Deriva estado visual e textual do cartão de confirmação da encomenda.
+        $pagamentoPendente = (bool) ($pagamentoPendente ?? false);
         $estadoTexto = $encomenda->estado === 'enviado'
             ? 'Enviado'
             : ($encomenda->estado === 'paga' ? 'Paga' : 'Pendente');
@@ -21,17 +23,35 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-700">Pagamento confirmado</p>
+                            <p class="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-700">{{ $pagamentoPendente ? 'Encomenda registada' : 'Pagamento confirmado' }}</p>
                             <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Encomenda feita com sucesso</h1>
                         </div>
                     </div>
                 </div>
 
                 <div class="px-6 py-8 sm:px-8">
-                    <p class="max-w-2xl text-base leading-7 text-slate-600">
-                        O pagamento foi confirmado e a tua encomenda ficou registada com sucesso. Podes consultar o estado da encomenda abaixo ou voltar a explorar os livros.
-                    </p>
+                    @if ($pagamentoPendente)
+                        {{-- Cenário de referência Multibanco: encomenda criada e pagamento pendente. --}}
+                        <div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                            <p class="text-sm font-semibold">Referência Multibanco gerada.</p>
+                            <p class="mt-1 text-sm leading-6">
+                                Tens 7 dias para pagar. Após esse prazo, a tua encomenda será cancelada automaticamente.
+                                @if (!empty($prazoLimitePagamento))
+                                    Prazo limite: {{ $prazoLimitePagamento->format('d/m/Y H:i') }}.
+                                @endif
+                            </p>
+                        </div>
+                        <p class="max-w-2xl text-base leading-7 text-slate-600">
+                            A tua encomenda foi registada e está pendente de pagamento. Assim que o pagamento for confirmado, ela seguirá para processamento.
+                        </p>
+                    @else
+                        {{-- Cenário de pagamento confirmado imediatamente. --}}
+                        <p class="max-w-2xl text-base leading-7 text-slate-600">
+                            O pagamento foi confirmado e a tua encomenda ficou registada com sucesso. Podes consultar o estado da encomenda abaixo ou voltar a explorar os livros.
+                        </p>
+                    @endif
 
+                    {{-- Blocos de síntese com número, estado e total da encomenda. --}}
                     <div class="mt-8 grid gap-4 sm:grid-cols-3">
                         <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                             <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Encomenda</p>
@@ -47,6 +67,7 @@
                         </div>
                     </div>
 
+                    {{-- Ações rápidas pós-compra: detalhe, catálogo e painel. --}}
                     <div class="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                         <a href="{{ route('cidadao.encomendas.show', $encomenda) }}" class="inline-flex items-center justify-center rounded-xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800">
                             Ver encomenda

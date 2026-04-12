@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Ecrã de edição do livro com remoção, capa e relações associadas. --}}
     <div class="p-6 max-w-5xl mx-auto">
         <div class="mb-6 text-left">
             {{-- Botão para voltar ao perfil do livro --}}
@@ -43,6 +44,7 @@
                             </label>
                             <input type="text" name="isbn" value="{{ old('isbn', $livro->isbn) }}" class="input input-bordered w-full @error('isbn') input-error @enderror">
                             @error('isbn')
+                                {{-- Mensagem de validação do ISBN atualizado. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -54,6 +56,7 @@
                             </label>
                             <input type="number" step="0.01" min="0" name="preco" value="{{ old('preco', $livro->preco) }}" class="input input-bordered w-full @error('preco') input-error @enderror">
                             @error('preco')
+                                {{-- Mensagem de validação do preço atualizado. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -66,6 +69,7 @@
                         </label>
                         <input type="text" name="nome" value="{{ old('nome', $livro->nome) }}" class="input input-bordered w-full @error('nome') input-error @enderror">
                         @error('nome')
+                            {{-- Mensagem de validação do nome/título atualizado. --}}
                             <span class="text-error text-sm mt-1">{{ $message }}</span>
                         @enderror
                     </div>
@@ -85,6 +89,7 @@
                                 @endforeach
                             </select>
                             @error('editora_id')
+                                {{-- Mensagem de validação da editora escolhida. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -97,6 +102,7 @@
                             </label>
                             <input type="file" name="imagem_capa" class="file-input file-input-bordered w-full @error('imagem_capa') file-input-error @enderror" accept="image/*">
                             @error('imagem_capa')
+                                {{-- Mensagem de validação para a nova capa enviada. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
 
@@ -126,6 +132,7 @@
                             @endforeach
                         </select>
                         @error('autores')
+                            {{-- Mensagem de validação para os autores selecionados. --}}
                             <span class="text-error text-sm mt-1">{{ $message }}</span>
                         @enderror
                     </div>
@@ -137,6 +144,7 @@
                         </label>
                         <textarea name="bibliografia" rows="5" class="textarea textarea-bordered w-full @error('bibliografia') textarea-error @enderror">{{ old('bibliografia', $livro->bibliografia) }}</textarea>
                         @error('bibliografia')
+                            {{-- Mensagem de validação para a bibliografia atualizada. --}}
                             <span class="text-error text-sm mt-1">{{ $message }}</span>
                         @enderror
                     </div>

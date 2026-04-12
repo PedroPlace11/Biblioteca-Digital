@@ -11,8 +11,10 @@
         {{-- Define nome da aplicação e título da página com base na rota atual --}}
         @php
             $configuredName = config('app.name');
+            // Normaliza o nome da aplicação quando a configuração padrão ainda está ativa.
             $appName = empty($configuredName) || $configuredName === 'Laravel' ? 'Biblioteca' : $configuredName;
             $routeName = request()->route()?->getName();
+            // Associa nomes de rotas a títulos curtos para a aba do navegador.
             $routeTitles = [
                 'dashboard' => 'Painel',
                 'livros.index' => 'Livros',
@@ -59,6 +61,7 @@
             {{-- Cabeçalho opcional de página (quando o slot $header for definido) --}}
             <!-- Cabecalho da Pagina -->
             @if (isset($header))
+                {{-- Só renderiza este bloco quando a view filha fornece cabeçalho. --}}
                 <header class="bg-white shadow">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                         {{ $header }}
@@ -69,10 +72,12 @@
             {{-- Conteúdo principal da página injetado via slot --}}
             <!-- Conteudo da Pagina -->
             <main class="pb-24 sm:pb-0 flex-1">
+                {{-- Compatibiliza views que usam section('content') e componentes com slot. --}}
                 @yield('content')
                 {{ $slot }}
             </main>
 
+            {{-- Rodapé comum a todas as páginas autenticadas. --}}
             <footer class="footer footer-center p-6 bg-base-100 border-t border-gray-100">
                 <p>Biblioteca Digital © {{ date('Y') }}</p>
             </footer>

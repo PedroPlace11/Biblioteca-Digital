@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 
 // Página pública inicial com destaque de livros e contadores gerais.
 Route::get('/', function () {
+    // Prioriza livros que começam por Harry Potter para destacar conteúdos populares.
     $harryPotters = Livro::with('autores')->where('nome', 'like', 'Harry Potter%')->take(2)->get();
     $outros = Livro::with('autores')->where('nome', 'not like', 'Harry Potter%')->take(6 - $harryPotters->count())->get();
     $livros = $harryPotters->concat($outros)->take(6);
@@ -44,6 +45,7 @@ Route::middleware([
     // Painel principal: ramificação admin e ramificação cidadão no mesmo endpoint.
     Route::get('/dashboard', function (Request $request) {
         if (Auth::user()->role == 'admin') {
+            // Carrega indicadores e listas avançadas para a área administrativa.
             $totalLivros = Livro::count();
             $totalAutores = Autor::count();
             $totalEditoras = Editora::count();
@@ -156,6 +158,7 @@ Route::middleware([
             ->take(5)
             ->with('autores')
             ->get();
+        // Calcula a última atualização para o polling do dashboard do cidadão.
         $minhasRequisicoes = Requisicao::withTrashed()
             ->where('user_id', Auth::id())
             ->with('user', 'livro.autores', 'livro.editora')
@@ -182,11 +185,13 @@ Route::middleware([
 use App\Http\Controllers\AdminReviewController;
 Route::middleware(['auth', 'admin'])->group(function () {
 
+    // Exportação e gestão de utilizadores administradores.
     Route::get('livros/export', [LivroController::class, 'export'])->name('livros.export');
     Route::get('admins', [AdminUserController::class, 'index'])->name('admins.index');
     Route::get('admins/create', [AdminUserController::class, 'create'])->name('admins.create');
     Route::post('admins', [AdminUserController::class, 'store'])->name('admins.store');
     Route::delete('admins/{admin}', [AdminUserController::class, 'destroy'])->name('admins.destroy');
+    // Confirmação de receção da requisição feita por cidadão.
     Route::post('/requisicoes/{requisicao}/confirmar-recepcao', [LivroController::class, 'confirmarRecepcao'])->name('requisicoes.confirmar-recepcao');
     Route::resource('livros', LivroController::class)->except(['index', 'show']);
     Route::resource('autores', AutorController::class)
@@ -207,6 +212,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 // Rotas autenticadas partilhadas entre admin e cidadão.
 use App\Http\Controllers\ReviewController;
 Route::middleware(['auth'])->group(function () {
+    // Área comum de requisições, checkout e notificações autenticadas.
     Route::get('/requisicoes', [RequisicaoController::class, 'index'])->name('requisicoes.index');
     // Endpoint de apoio ao polling da dashboard do cidadão para atualização quase em tempo real.
     Route::get('/requisicoes/ultima-atualizacao', function () {
@@ -234,7 +240,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/checkout/morada', [CheckoutController::class, 'morada'])->name('checkout.morada');
     Route::post('/checkout/morada', [CheckoutController::class, 'guardarMorada'])->name('checkout.morada.guardar');
     Route::post('/checkout/promocao', [CheckoutController::class, 'atualizarCodigoPromocional'])->name('checkout.promocao');
+    Route::post('/checkout/faturacao', [CheckoutController::class, 'atualizarDadosFaturacao'])->name('checkout.faturacao');
     Route::get('/checkout/pagamento', [CheckoutController::class, 'pagamento'])->name('checkout.pagamento');
+    // Atalho que redireciona para o checkout com mensagem contextual.
     Route::get('/checkout/pagamento/stripe', function () {
         return redirect()->route('checkout.pagamento')
             ->with('popup_info', 'Use o botao "Pagar com Stripe" para iniciar o pagamento.');
@@ -263,11 +271,13 @@ Route::prefix('conta')->middleware(['auth', 'verified'])->group(function () {
     Route::delete('moradas/{morada}', [CidadaoMoradaController::class, 'destroy'])->name('cidadao.moradas.destroy');
     Route::get('encomendas', [CidadaoEncomendaController::class, 'index'])->name('cidadao.encomendas.index');
     Route::get('encomendas/{encomenda}', [CidadaoEncomendaController::class, 'show'])->name('cidadao.encomendas.show');
+    Route::get('encomendas/{encomenda}/fatura/pdf', [CidadaoEncomendaController::class, 'exportarFaturaPdf'])->name('cidadao.encomendas.fatura.pdf');
 });
 
 // Rotas públicas de catálogo.
 
 // Pesquisa Google Books
+// Pesquisa e persistência de resultados vindos da API externa.
 Route::get('/livros/googlebooks', [LivroController::class, 'pesquisarGoogleBooks'])->name('livros.googlebooks');
 Route::post('/livros/googlebooks/salvar', [LivroController::class, 'salvarGoogleBook'])->name('livros.googlebooks.salvar');
 
@@ -281,6 +291,7 @@ Route::get('/editoras', [EditoraController::class, 'index'])->name('editoras.ind
 Route::get('/editoras/{editora}', [EditoraController::class, 'show'])->name('editoras.show');
 
 // Autenticação unificada em vista combinada.
+// As páginas de login e registo partilham o mesmo layout para simplificar a UX.
 Route::get('/login', function () {
     return view('auth.combined-auth');
 })->middleware('guest')->name('login');

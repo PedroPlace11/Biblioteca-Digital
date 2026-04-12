@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Ecrã de edição de editora com ações de atualização e remoção. --}}
     <div class="p-6 max-w-5xl mx-auto">
         <div class="mb-6 text-left">
             {{-- Botão para voltar ao perfil da editora --}}
@@ -42,6 +43,7 @@
                             </label>
                             <input type="text" name="nome" value="{{ old('nome', $editora->nome) }}" class="input input-bordered w-full @error('nome') input-error @enderror" required>
                             @error('nome')
+                                {{-- Erro de validação do nome atualizado da editora. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -54,6 +56,7 @@
                             </label>
                             <input type="file" name="logotipo" class="file-input file-input-bordered w-full @error('logotipo') file-input-error @enderror" accept="image/*">
                             @error('logotipo')
+                                {{-- Erro de upload do novo logótipo. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
 

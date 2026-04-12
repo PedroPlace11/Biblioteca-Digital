@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Passo 3 do checkout: revisão final e pagamento online. --}}
     <div class="relative overflow-hidden py-8">
         <div class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-slate-50 via-white to-sky-50"></div>
 
@@ -9,23 +10,45 @@
             </div>
 
         @if (session('popup_info'))
+            {{-- Aviso temporário sobre dados de checkout/faturação. --}}
             <div class="alert alert-info mb-4"><span>{{ session('popup_info') }}</span></div>
         @endif
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <section class="lg:col-span-2 rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                     <div class="px-6 pt-6">
-                        <h2 class="text-xl font-semibold text-slate-900">Morada de entrega</h2>
-                        <p class="mt-1 text-sm text-slate-500">Confirma os dados do destinatário antes de pagar.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                {{-- Resumo da morada de entrega usada nesta encomenda. --}}
+                                <h2 class="text-xl font-semibold text-slate-900">Morada de entrega</h2>
+                                <p class="mt-1 text-sm text-slate-500">Confirma os dados do destinatário antes de pagar.</p>
 
-                        <div class="mt-5 text-sm text-slate-700 space-y-1">
-                            <p><span class="font-semibold text-slate-900">Nome:</span> {{ $dadosMorada['nome_destinatario'] }}</p>
-                            <p><span class="font-semibold text-slate-900">Telemóvel:</span> {{ $dadosMorada['telemovel_destinatario'] }}</p>
-                            <p><span class="font-semibold text-slate-900">Morada:</span> {{ $dadosMorada['morada_linha_1'] }}</p>
-                            @if (!empty($dadosMorada['morada_linha_2']))
-                                <p>{{ $dadosMorada['morada_linha_2'] }}</p>
-                            @endif
-                            <p>{{ $dadosMorada['codigo_postal'] }} - {{ $dadosMorada['cidade'] }} ({{ $dadosMorada['pais'] }})</p>
+                                <div class="mt-4 text-sm text-slate-700 space-y-1">
+                                    <p><span class="font-semibold text-slate-900">Nome:</span> {{ $dadosMorada['nome_destinatario'] }}</p>
+                                    <p><span class="font-semibold text-slate-900">Telemóvel:</span> {{ $dadosMorada['telemovel_destinatario'] }}</p>
+                                    <p><span class="font-semibold text-slate-900">Morada:</span> {{ $dadosMorada['morada_linha_1'] }}</p>
+                                    @if (!empty($dadosMorada['morada_linha_2']))
+                                        <p>{{ $dadosMorada['morada_linha_2'] }}</p>
+                                    @endif
+                                    <p>{{ $dadosMorada['codigo_postal'] }} - {{ $dadosMorada['cidade'] }} ({{ $dadosMorada['pais'] }})</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                {{-- Morada de faturação e NIF conforme preferência do utilizador. --}}
+                                <h2 class="text-xl font-semibold text-slate-900">Morada de faturação</h2>
+                                <p class="mt-1 text-sm text-slate-500">Dados usados para emissão da fatura.</p>
+
+                                <div class="mt-4 text-sm text-slate-700 space-y-1">
+                                    <p><span class="font-semibold text-slate-900">Nome:</span> {{ $dadosFaturacao['fatura_nome'] ?: $dadosMorada['nome_destinatario'] }}</p>
+                                    <p><span class="font-semibold text-slate-900">NIF:</span> {{ $dadosFaturacao['fatura_com_nif'] ? ($dadosFaturacao['fatura_nif'] ?: '-') : 'Sem NIF' }}</p>
+                                    <p><span class="font-semibold text-slate-900">Morada:</span> {{ $dadosMorada['morada_linha_1'] }}</p>
+                                    @if (!empty($dadosMorada['morada_linha_2']))
+                                        <p>{{ $dadosMorada['morada_linha_2'] }}</p>
+                                    @endif
+                                    <p>{{ $dadosMorada['codigo_postal'] }} - {{ $dadosMorada['cidade'] }} ({{ $dadosMorada['pais'] }})</p>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="mt-6">
@@ -45,6 +68,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
                                 @foreach ($itens as $item)
+                                    {{-- Linha de item confirmando quantidade e subtotal final. --}}
                                     <tr class="hover:bg-slate-50/70 transition align-middle">
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-4">
@@ -67,6 +91,7 @@
                             </tbody>
                         </table>
                     </div>
+
                 </section>
 
                 <aside class="space-y-4">
@@ -82,6 +107,7 @@
                     <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                         <p class="text-sm font-semibold text-slate-900">Código promocional</p>
 
+                        {{-- Aplicação ou remoção de código promocional antes do pagamento. --}}
                         <form method="POST" action="{{ route('checkout.promocao') }}" class="mt-4 space-y-3">
                             @csrf
 
@@ -157,10 +183,12 @@
                         </div>
 
                         @if (!empty($clientSecret) && !empty($publishableKey))
+                            {{-- Zona onde Stripe Elements renderiza métodos de pagamento disponíveis. --}}
                             <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                 <p class="text-sm font-semibold text-slate-900">Forma de pagamento</p>
                                 <p class="mt-1 text-sm text-slate-500">Escolhe uma forma de pagamento e confirma aqui mesmo.</p>
                                 <div id="payment-element" class="mt-4 rounded-xl bg-white p-3"></div>
+                                <p id="cvv-hint" class="mt-2 hidden text-xs text-slate-500">No Stripe, CVC corresponde ao CVV (os 3 dígitos de segurança do cartão).</p>
                                 <div id="payment-message" class="mt-3 text-sm text-rose-600" role="alert"></div>
                             </div>
                         @else
@@ -170,6 +198,7 @@
                         @endif
 
                         <form id="payment-form" class="mt-6">
+                            {{-- Submissão controlada por JS para confirmar PaymentIntent no Stripe. --}}
                             <button id="submit-payment" type="submit" disabled class="inline-flex w-full items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-slate-400">
                                 <span id="button-text">Pagar</span>
                             </button>
@@ -189,8 +218,11 @@
     @if (!empty($clientSecret) && !empty($publishableKey))
         <script src="https://js.stripe.com/v3/"></script>
         <script>
+            // Inicializa Stripe Elements e controla o fluxo de confirmação do pagamento.
             document.addEventListener('DOMContentLoaded', function () {
-                const stripe = Stripe(@js($publishableKey));
+                const stripe = Stripe(@js($publishableKey), {
+                    locale: 'pt-BR',
+                });
                 const elements = stripe.elements({
                     clientSecret: @js($clientSecret),
                     appearance: {
@@ -215,15 +247,36 @@
                 const submitButton = document.getElementById('submit-payment');
                 const buttonText = document.getElementById('button-text');
                 const messageContainer = document.getElementById('payment-message');
+                const cvvHint = document.getElementById('cvv-hint');
                 const successUrl = @js(route('checkout.sucesso'));
                 let paymentElementReady = false;
+                let selectedPaymentType = 'card';
+
+                const toggleCvvHint = (paymentType) => {
+                    // Exibe dica de CVV apenas para método cartão.
+                    if (!cvvHint) {
+                        return;
+                    }
+
+                    const shouldShow = paymentType === 'card';
+                    cvvHint.classList.toggle('hidden', !shouldShow);
+                };
 
                 paymentElement.on('ready', function () {
+                    // Libera botão apenas após carregamento completo dos métodos de pagamento.
                     paymentElementReady = true;
                     submitButton.disabled = false;
+                    toggleCvvHint(selectedPaymentType);
+                });
+
+                paymentElement.on('change', function (event) {
+                    selectedPaymentType = event?.value?.type || selectedPaymentType;
+                    toggleCvvHint(selectedPaymentType);
                 });
 
                 paymentElement.on('loaderror', function (event) {
+                    // Trata erro de carregamento de métodos com mensagem amigável.
+                    toggleCvvHint('');
                     setMessage(event?.error?.message || 'Não foi possível carregar as formas de pagamento.');
                 });
 
@@ -232,6 +285,7 @@
                 };
 
                 form.addEventListener('submit', async (event) => {
+                    // Confirma dados no Stripe e decide redirecionamento conforme estado do intent.
                     event.preventDefault();
 
                     if (!paymentElementReady) {
@@ -270,7 +324,19 @@
 
                         const paymentIntent = result.paymentIntent;
 
+                        const isMultibancoPending = paymentIntent
+                            && ['processing', 'requires_action'].includes(paymentIntent.status)
+                            && (
+                                paymentIntent?.next_action?.type === 'display_multibanco_details'
+                                || (Array.isArray(paymentIntent?.payment_method_types) && paymentIntent.payment_method_types.includes('multibanco'))
+                            );
+
                         if (paymentIntent && ['succeeded', 'processing'].includes(paymentIntent.status)) {
+                            window.location.href = `${successUrl}?payment_intent=${encodeURIComponent(paymentIntent.id)}`;
+                            return;
+                        }
+
+                        if (isMultibancoPending) {
                             window.location.href = `${successUrl}?payment_intent=${encodeURIComponent(paymentIntent.id)}`;
                             return;
                         }

@@ -14,6 +14,7 @@ class AutorSeeder extends Seeder
     // Insere autores padrao para testes e demonstracao.
     public function run()
     {
+        // Bloco principal com autores classicos e contemporaneos usados no catalogo inicial.
         Autor::create([
             'nome' => 'José Saramago',
             'foto' => 'images/autores/saramago.jpg',
@@ -70,6 +71,8 @@ class AutorSeeder extends Seeder
             'foto' => 'images/autores/jkrowling.jpg',
             'bibliografia' => 'J.K. Rowling é uma escritora britânica famosa por criar a série Harry Potter, uma das sagas literárias mais populares da história.'
         ]);
+
+        // Cada registo inclui caminho da foto e texto de bibliografia para exibição no frontend.
     }
 }
 

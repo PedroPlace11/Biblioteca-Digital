@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Área de edição com o mesmo padrão visual do formulário de criação. --}}
     <div class="p-6 max-w-5xl mx-auto">
         <div class="mb-6 text-left">
             {{-- Botão para voltar ao perfil do autor. --}}
@@ -43,6 +44,7 @@
                             </label>
                             <input type="text" name="nome" class="input input-bordered w-full @error('nome') input-error @enderror" value="{{ old('nome', $autor->nome) }}" required>
                             @error('nome')
+                                {{-- Erro de validação retornado para o nome atualizado. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -54,6 +56,7 @@
                             {{-- Campo opcional: biografia do autor. --}}
                             <textarea name="bibliografia" class="textarea textarea-bordered w-full @error('bibliografia') textarea-error @enderror" rows="6">{{ old('bibliografia', $autor->bibliografia) }}</textarea>
                             @error('bibliografia')
+                                {{-- Erro exibido quando a biografia não cumpre validação. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -66,6 +69,7 @@
                             {{-- Upload opcional de foto do autor. --}}
                             <input type="file" name="foto" accept="image/*" class="file-input file-input-bordered w-full @error('foto') file-input-error @enderror">
                             @error('foto')
+                                {{-- Erro de upload da nova foto (formato/tamanho). --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
 

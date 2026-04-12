@@ -1,9 +1,11 @@
 <x-app-layout>
+    {{-- Página de detalhe de uma encomenda com totais, itens e entrega. --}}
     <div class="relative overflow-hidden py-8">
         <div class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-sky-50 via-white to-blue-50"></div>
 
         <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
             @php
+                // Recalcula componentes financeiros exibidos no resumo da encomenda.
                 $baseTotal = (float) $encomenda->itens->sum('subtotal');
                 $valorSemIva = $baseTotal / 1.06;
                 $valorIva = $baseTotal - $valorSemIva;
@@ -27,6 +29,7 @@
                             Voltar
                         </a>
 
+                        {{-- Estado atual com estilo visual específico por situação. --}}
                         @if ($encomenda->estado === 'enviado')
                             <span class="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">Enviado</span>
                         @elseif ($encomenda->estado === 'paga')
@@ -40,9 +43,14 @@
                 </div>
 
                 <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {{-- Cartões de identificação, datas, valores e rastreio. --}}
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
                         <p class="text-xs uppercase tracking-wide text-slate-500">Cliente</p>
                         <p class="text-sm text-slate-600">N.o leitor: {{ $encomenda->user?->numero_leitor ?? '-' }}</p>
+                        <p class="text-sm text-slate-600">NIF: {{ $encomenda->fatura_com_nif ? ($encomenda->fatura_nif ?? '-') : 'Sem NIF na fatura' }}</p>
+                        @if ($encomenda->fatura_com_nif && !empty($encomenda->fatura_nome))
+                            <p class="text-sm text-slate-600">Nome fatura: {{ $encomenda->fatura_nome }}</p>
+                        @endif
                         <p class="mt-1 font-semibold text-slate-900 truncate">{{ $encomenda->user?->name ?? '-' }}</p>
                         <p class="text-sm text-slate-600 truncate">{{ $encomenda->user?->email ?? '-' }}</p>
                     </div>
@@ -72,6 +80,7 @@
                             </div>
                         @endif
                         <div class="border-t border-slate-100 pt-3 flex items-center justify-between gap-3">
+                            {{-- Total final já inclui portes e eventual desconto. --}}
                             <p class="text-xs uppercase tracking-wide text-slate-500">Total</p>
                             <p class="text-2xl font-semibold text-slate-900">{{ number_format($totalFinal, 2, ',', '.') }} &euro;</p>
                         </div>
@@ -93,6 +102,7 @@
                     </div>
 
                     <div class="mt-4 overflow-x-auto">
+                        {{-- Lista detalhada de itens que compõem a encomenda. --}}
                         <table class="w-full min-w-[640px] text-sm">
                             <thead class="bg-slate-50 text-slate-600">
                                 <tr>
@@ -104,6 +114,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
                                 @foreach ($encomenda->itens as $item)
+                                    {{-- Linha por item com capa, quantidade e subtotal. --}}
                                     <tr class="hover:bg-slate-50/70 transition">
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-4">
@@ -136,6 +147,7 @@
                 </div>
 
                 <aside class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    {{-- Bloco lateral com dados do destinatário e morada de entrega. --}}
                     <h2 class="text-xl font-semibold text-slate-900">Entrega</h2>
                     <p class="mt-1 text-sm text-slate-500">Dados do destinatário e morada.</p>
 

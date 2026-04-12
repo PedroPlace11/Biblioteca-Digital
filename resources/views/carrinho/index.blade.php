@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Página principal do carrinho com resumo e navegação para checkout. --}}
     <div class="relative overflow-hidden py-8">
         <div class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-slate-50 via-white to-sky-50"></div>
 
@@ -19,6 +20,7 @@
             </section>
 
             @if ($itens->isEmpty())
+                {{-- Estado vazio orienta o utilizador para voltar ao catálogo. --}}
                 <section class="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
                     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-2xl text-slate-500">🛒</div>
                     <h2 class="mt-5 text-2xl font-semibold text-slate-900">O carrinho está vazio</h2>
@@ -31,6 +33,7 @@
                 </section>
             @else
                 @php
+                    // Totais base calculados no servidor para manter consistência do checkout.
                     $subtotalComIva = (float) $itens->sum('subtotal');
                     $valorSemIva = $subtotalComIva / 1.06;
                     $valorIva = $subtotalComIva - $valorSemIva;
@@ -64,6 +67,7 @@
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
                                     @foreach ($itens as $item)
+                                        {{-- Linha do item com ações de quantidade e remoção. --}}
                                         <tr class="align-middle hover:bg-slate-50/70 transition">
                                             <td class="px-6 py-4 whitespace-normal break-words">
                                                 <div class="flex items-center gap-4">
@@ -91,6 +95,7 @@
                                             <td class="px-6 py-4">
                                                 <div class="flex items-center justify-center gap-2 flex-nowrap">
                                                     @if ($item->quantidade === 1)
+                                                        {{-- Quando só há 1 unidade, botão remove diretamente o item. --}}
                                                         <form method="POST" action="{{ route('carrinho.remover', $item->id) }}" class="inline-flex items-center">
                                                             @csrf
                                                             @method('DELETE')
@@ -105,10 +110,12 @@
                                                     <form method="POST" action="{{ route('carrinho.atualizar', $item->id) }}" class="inline-flex items-center gap-1">
                                                         @csrf
                                                         @method('PATCH')
+                                                        {{-- Diminui quantidade apenas quando maior que 1. --}}
                                                         @if ($item->quantidade > 1)
                                                             <button type="submit" name="quantidade" value="{{ $item->quantidade - 1 }}" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg font-semibold text-slate-700 transition hover:bg-slate-50" aria-label="Diminuir quantidade do livro {{ $item->livro?->nome ?? 'Livro removido' }}">-</button>
                                                         @endif
                                                         <input type="text" value="{{ $item->quantidade }}" readonly class="input input-bordered input-sm w-14 bg-white text-center" aria-label="Quantidade do livro {{ $item->livro?->nome ?? 'Livro removido' }}">
+                                                        {{-- Limita incremento a 20 unidades por item. --}}
                                                         <button type="submit" name="quantidade" value="{{ min(20, $item->quantidade + 1) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40" {{ $item->quantidade >= 20 ? 'disabled' : '' }} aria-label="Aumentar quantidade do livro {{ $item->livro?->nome ?? 'Livro removido' }}">+</button>
                                                     </form>
                                                 </div>
@@ -136,6 +143,7 @@
                             <div class="mt-5 space-y-4">
                                 <div class="space-y-2">
                                     @foreach ($itens as $itemResumo)
+                                        {{-- Resumo rápido de nomes e quantidades para conferência final. --}}
                                         <div class="flex items-start justify-between gap-3">
                                             <span class="text-sm text-slate-600 leading-snug">{{ $itemResumo->livro?->nome ?? 'Livro removido' }}</span>
                                             <span class="text-sm font-semibold text-slate-900 whitespace-nowrap">x{{ $itemResumo->quantidade }}</span>

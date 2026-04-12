@@ -13,10 +13,15 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Cria a tabela de editoras do catalogo.
         Schema::create('editoras', function (Blueprint $table) {
+            // Chave primaria da tabela.
             $table->id();
+            // Nome da editora.
             $table->string('nome');
+            // Caminho/URL do logotipo da editora (opcional).
             $table->string('logotipo')->nullable();
+            // created_at e updated_at.
             $table->timestamps();
         });
     }
@@ -26,6 +31,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Remove a tabela de editoras caso exista.
         Schema::dropIfExists('editoras');
     }
 };

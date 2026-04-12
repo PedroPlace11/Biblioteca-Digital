@@ -21,14 +21,14 @@ class NotificarCarrinhosAbandonados extends Command
      *
      * @var string
      */
-    protected $description = 'Envia notificações para cidadãos com carrinho abandonado há mais de 30 minutos';
+    protected $description = 'Envia notificações para cidadãos com carrinho abandonado há mais de 1 hora';
 
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
-        $limite = now()->subMinutes(30);
+        $limite = now()->subHour();
 
         $carrinhos = Carrinho::with(['user', 'itens.livro'])
             ->whereHas('itens')

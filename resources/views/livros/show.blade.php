@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Página de detalhe do livro com ações, relações e histórico. --}}
     {{-- Popup de sucesso exibido quando há mensagem de sucesso na sessão --}}
     @if (session('popup_success'))
         <div id="livro-popup-success" class="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -76,6 +77,7 @@
                     <div class="mt-auto pt-6 flex justify-end">
                         @if (auth()->check())
                             <div class="flex items-center gap-2">
+                                {{-- Estado de disponibilidade controla as ações possíveis para o livro. --}}
                                 @if (!empty($livroIndisponivel))
                                     <span class="badge border-[#00c98d] text-[#00b67a] bg-[#f2fff9] font-medium">Requisitado</span>
                                     @if (!empty($requisitadoPorMim))
@@ -141,6 +143,7 @@
         {{-- Seção inferior com relacionamentos: autores e editora --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
+                {{-- Secção de autores associados ao livro atual. --}}
                 <h2 class="text-2xl font-semibold mb-4">Autores</h2>
 
                 {{-- Lista de autores vinculados ao livro --}}
@@ -175,6 +178,7 @@
             </div>
 
             <div>
+                {{-- Secção com a editora vinculada ao livro. --}}
                 <h2 class="text-2xl font-semibold mb-4">Editora</h2>
 
                 {{-- Card da editora vinculada ao livro --}}
@@ -208,6 +212,7 @@
         {{-- Seção de reviews ativos do livro --}}
         @if(isset($reviewsAtivos) && $reviewsAtivos->count())
             <div class="mt-10">
+                {{-- Reviews aprovados exibidos publicamente na página do livro. --}}
                 <h2 class="text-2xl font-semibold mb-4">Reviews dos Leitores</h2>
                 <div class="space-y-4">
                     @foreach($reviewsAtivos as $review)
@@ -243,6 +248,7 @@
         {{-- Botão para deixar review (apenas cidadão, requisição encerrada e sem review) --}}
         @auth
             @php
+                // Verifica se o cidadão pode deixar review com base no histórico encerrado.
                 $temRequisicaoEncerrada = isset($historicoRequisicoesPorCidadao[auth()->id()]) && $historicoRequisicoesPorCidadao[auth()->id()]->whereNotNull('deleted_at')->count() > 0;
                 $jaDeuReview = \App\Models\Review::where('user_id', auth()->id())->where('livro_id', $livro->id)->exists();
             @endphp
@@ -258,6 +264,7 @@
         {{-- Seção de histórico de requisições do livro --}}
         @auth
         <div class="mt-10">
+            {{-- Histórico de requisições do livro agrupado por cidadão. --}}
             <h2 class="text-2xl font-semibold mb-4">Histórico</h2>
             @if ($historicoRequisicoesPorCidadao->isNotEmpty())
                 <div class="space-y-4">
@@ -303,6 +310,7 @@
                                         <tbody>
                                             @foreach ($requisicoesDoCidadao as $requisicao)
                                                 @php
+                                                    // Calcula dias decorridos para exibir a duração da requisição.
                                                     $dataEncerramento = $requisicao->data_recepcao_real ?? $requisicao->deleted_at;
                                                     $diasDecorridos = $requisicao->dias_decorridos;
                                                     if (is_null($diasDecorridos) && $dataEncerramento && $requisicao->created_at) {

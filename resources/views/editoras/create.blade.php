@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Layout centralizado para a criação de uma nova editora. --}}
     <div class="p-6 max-w-5xl mx-auto">
         <div class="mb-6 text-left">
             {{-- Botão para voltar à lista de editoras --}}
@@ -36,6 +37,7 @@
                                 class="input input-bordered w-full @error('nome') input-error @enderror"
                                 required>
                             @error('nome')
+                                {{-- Mensagem de validação do campo nome da editora. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -54,12 +56,14 @@
                                 onchange="previewLogo(event)"
                                 class="file-input file-input-bordered w-full @error('logotipo') file-input-error @enderror">
                             @error('logotipo')
+                                {{-- Mensagem de validação para o ficheiro de logótipo. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
 
                     {{-- Preview do logotipo selecionado --}}
+                    {{-- Pré-visualização local do logótipo antes do envio. --}}
                     <div class="rounded-xl border border-dashed border-base-300 bg-base-100/60 p-4">
                         <p class="font-semibold mb-2 text-sm">Preview do logótipo</p>
                         <img id="logoPreview" class="w-24 h-24 rounded-full object-cover border shadow-sm" style="display:none" alt="Preview do logótipo selecionado">
@@ -86,6 +90,7 @@
 
             // Garante que existe arquivo selecionado antes de gerar o preview.
             if (input.files && input.files[0]) {
+                // Usa a imagem local apenas para visualização imediata na interface.
                 preview.src = URL.createObjectURL(input.files[0]);
                 preview.style.display = 'block';
                 if (placeholder) {

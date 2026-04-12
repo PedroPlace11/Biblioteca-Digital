@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Popups de feedback de operacoes administrativas (sucesso/info). --}}
     @if (session('popup_success') || session('popup_info'))
         <div class="fixed top-5 right-5 z-50 w-full max-w-md space-y-2">
             @if (session('popup_success'))
@@ -22,6 +23,7 @@
 
         <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
             @php
+                // Calcula resumo financeiro apresentado no painel de detalhe.
                 $baseTotal = (float) $encomenda->itens->sum('subtotal');
                 $valorSemIva = $baseTotal / 1.06;
                 $valorIva = $baseTotal - $valorSemIva;
@@ -32,6 +34,7 @@
                 $totalFinal = (float) $encomenda->total;
             @endphp
 
+            {{-- Cabecalho do detalhe da encomenda com estado e acao de retorno. --}}
             <section class="rounded-3xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur p-6 sm:p-8">
                 <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -58,18 +61,25 @@
                 </div>
 
                 <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {{-- Card de cliente/faturacao. --}}
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
                         <p class="text-xs uppercase tracking-wide text-slate-500">Cliente</p>
                         <p class="text-sm text-slate-600">N.o leitor: {{ $encomenda->user?->numero_leitor ?? '-' }}</p>
+                        <p class="text-sm text-slate-600">NIF: {{ $encomenda->fatura_com_nif ? ($encomenda->fatura_nif ?? '-') : 'Sem NIF na fatura' }}</p>
+                        @if ($encomenda->fatura_com_nif && !empty($encomenda->fatura_nome))
+                            <p class="text-sm text-slate-600">Nome fatura: {{ $encomenda->fatura_nome }}</p>
+                        @endif
                         <p class="mt-1 font-semibold text-slate-900 truncate">{{ $encomenda->user?->name ?? '-' }}</p>
                         <p class="text-sm text-slate-600 truncate">{{ $encomenda->user?->email ?? '-' }}</p>
                     </div>
 
+                    {{-- Card de data de criacao da encomenda. --}}
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
                         <p class="text-xs uppercase tracking-wide text-slate-500">Data</p>
                         <p class="mt-1 font-semibold text-slate-900">{{ $encomenda->created_at?->format('d/m/Y H:i') }}</p>
                     </div>
 
+                    {{-- Card com decomposicao financeira (IVA, portes, desconto, total). --}}
                     <div class="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
                         <div class="flex items-center justify-between gap-3">
                             <p class="text-xs uppercase tracking-wide text-slate-500">Valor sem IVA</p>
@@ -96,6 +106,7 @@
 
                     </div>
 
+                    {{-- Card de acompanhamento logistico (transportadora/rastreio). --}}
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
                         <p class="text-xs uppercase tracking-wide text-slate-500">Rastreio</p>
                         <p class="mt-1 font-semibold text-slate-900">{{ $encomenda->transportadora ?? 'CTT' }}</p>
@@ -104,6 +115,7 @@
                 </div>
             </section>
 
+            {{-- Secao principal: itens da encomenda + barra lateral de entrega/gestao. --}}
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                     <div class="px-6 pt-6">
@@ -111,6 +123,7 @@
                     </div>
 
                     <div class="mt-4 overflow-x-auto">
+                        {{-- Tabela de itens com capa, quantidade e valores. --}}
                         <table class="w-full min-w-[640px] text-sm">
                             <thead class="bg-slate-50 text-slate-600">
                                 <tr>
@@ -126,6 +139,7 @@
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-4">
                                                 <div class="shrink-0 flex items-center justify-center">
+                                                    {{-- Exibe capa quando existir; fallback visual caso contrario. --}}
                                                     @if ($item->livro?->imagem_capa)
                                                         <img src="{{ asset($item->livro->imagem_capa) }}" alt="Capa {{ $item->livro_nome }}" class="h-24 w-16 rounded-md object-cover border border-slate-200 bg-slate-50">
                                                     @else
@@ -135,6 +149,7 @@
                                                     @endif
                                                 </div>
                                                 @if ($item->livro)
+                                                    {{-- Link para pagina publica do livro quando relacao ainda existir. --}}
                                                     <a href="{{ route('livros.show', $item->livro) }}" class="font-medium text-slate-900 transition hover:text-sky-700 hover:underline">
                                                         {{ $item->livro_nome }}
                                                     </a>
@@ -154,6 +169,7 @@
                 </div>
 
                 <div class="space-y-6">
+                    {{-- Bloco de dados de entrega usados no pedido. --}}
                     <aside class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                         <h2 class="text-xl font-semibold text-slate-900">Entrega</h2>
                         <p class="mt-1 text-sm text-slate-500">Dados do destinatário e morada.</p>
@@ -181,6 +197,7 @@
                     </aside>
 
                     @if (!in_array($encomenda->estado, ['enviado', 'pagamento_recusado'], true))
+                        {{-- Acoes administrativas de transicao de estado (enviar/pendente/recusar). --}}
                         <aside class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                             <h2 class="text-xl font-semibold text-slate-900">Gestão do estado</h2>
                             <p class="mt-1 text-sm text-slate-500">Sessão Stripe e ações administrativas.</p>
@@ -227,6 +244,7 @@
 
     @if (session('popup_success') || session('popup_info'))
         <script>
+            // Fecha popups por clique e remove automaticamente apos alguns segundos.
             document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('.js-popup').forEach(function (popup) {
                     var closeBtn = popup.querySelector('[data-close-popup]');

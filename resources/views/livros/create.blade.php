@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Formulário de criação de livro com metadados, autores e capa. --}}
     <div class="p-6 max-w-5xl mx-auto">
         <div class="mb-6 text-left">
             {{-- Botão para voltar à lista de livros --}}
@@ -39,6 +40,7 @@
                                 class="input input-bordered w-full @error('isbn') input-error @enderror">
                             <span class="text-xs text-base-content/60 mt-1">Máximo de 13 caracteres.</span>
                             @error('isbn')
+                                {{-- Mensagem de validação do ISBN informado. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -57,6 +59,7 @@
                                 value="{{ old('preco') }}"
                                 class="input input-bordered w-full @error('preco') input-error @enderror">
                             @error('preco')
+                                {{-- Mensagem de validação do preço do livro. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -74,6 +77,7 @@
                             value="{{ old('nome') }}"
                             class="input input-bordered w-full @error('nome') input-error @enderror">
                         @error('nome')
+                            {{-- Mensagem de validação do título do livro. --}}
                             <span class="text-error text-sm mt-1">{{ $message }}</span>
                         @enderror
                     </div>
@@ -94,6 +98,7 @@
                                 @endforeach
                             </select>
                             @error('editora_id')
+                                {{-- Mensagem de validação para a editora selecionada. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -110,6 +115,7 @@
                                 accept="image/*"
                                 class="file-input file-input-bordered w-full @error('imagem_capa') file-input-error @enderror">
                             @error('imagem_capa')
+                                {{-- Mensagem de validação para a imagem da capa. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -128,6 +134,7 @@
                             @endforeach
                         </select>
                         @error('autores')
+                            {{-- Mensagem de validação para a seleção de autores. --}}
                             <span class="text-error text-sm mt-1">{{ $message }}</span>
                         @enderror
                     </div>
@@ -143,6 +150,7 @@
                             placeholder="Descrição, sinopse ou notas relevantes sobre o livro..."
                             class="textarea textarea-bordered w-full @error('bibliografia') textarea-error @enderror">{{ old('bibliografia') }}</textarea>
                         @error('bibliografia')
+                            {{-- Mensagem de validação para a bibliografia/sinopse. --}}
                             <span class="text-error text-sm mt-1">{{ $message }}</span>
                         @enderror
                     </div>

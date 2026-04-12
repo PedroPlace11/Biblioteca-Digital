@@ -11,6 +11,7 @@
 
         {{-- Cards de indicadores gerais do sistema --}}
         <div class="grid grid-cols-4 gap-4 mb-8">
+            {{-- Indicadores resumidos para leitura rápida do estado do catálogo. --}}
             {{-- Total de livros cadastrados --}}
             <div class="card bg-primary text-primary-content">
                 <div class="card-body">
@@ -47,6 +48,7 @@
         {{-- Card com gráfico de quantidade de livros por editora --}}
         <div class="card bg-base-100 shadow mt-8">
             <div class="card-body">
+                {{-- Gráfico de barras com distribuição de livros por editora. --}}
                 <h2 class="card-title">
                     Livros por Editora
                 </h2>
@@ -57,6 +59,7 @@
         {{-- Ranking de autores com mais livros vinculados --}}
         <div class="card bg-base-100 shadow mt-8">
             <div class="card-body">
+                {{-- Ranking com os autores mais publicados no sistema. --}}
                 <h2 class="card-title">
                     Top Autores
                 </h2>

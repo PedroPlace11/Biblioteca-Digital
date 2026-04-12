@@ -14,6 +14,8 @@ class LivroSeeder extends Seeder
     // Cria livros e vincula cada registo aos respetivos autores.
     public function run()
     {
+        // Catalogo inicial com obras classicas e contemporaneas.
+        // Cada livro recebe metadados (ISBN, capa, preco) e associacao com autores via tabela pivot.
         $livro1 = Livro::create([
             'isbn' => '123456',
             'nome' => '1984',
@@ -22,6 +24,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/1984.jpg',
             'preco' => 19.90
         ]);
+        // Associa livro ao autor com ID 3 (George Orwell).
         $livro1->autores()->attach(3);
 
         $livro2 = Livro::create([
@@ -32,6 +35,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/domcasmurro.jpg',
             'preco' => 15.00
         ]);
+        // Associa livro ao autor com ID 2 (Machado de Assis).
         $livro2->autores()->attach(2);
 
         $livro3 = Livro::create([
@@ -42,6 +46,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/ricardoreis.jpg',
             'preco' => 22.90
         ]);
+        // Associa livro ao autor com ID 1 (Jose Saramago).
         $livro3->autores()->attach(1);
 
         $livro4 = Livro::create([
@@ -52,6 +57,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/alquimista.jpg',
             'preco' => 28.90
         ]);
+        // Associa livro ao autor com ID 4 (Paulo Coelho).
         $livro4->autores()->attach(4);
 
         $livro5 = Livro::create([
@@ -62,6 +68,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/horadaestrela.jpg',
             'preco' => 16.90
         ]);
+        // Associa livro ao autor com ID 5 (Clarice Lispector).
         $livro5->autores()->attach(5);
 
         $livro6 = Livro::create([
@@ -72,6 +79,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/capitaesareia.jpg',
             'preco' => 25.90
         ]);
+        // Associa livro ao autor com ID 6 (Jorge Amado).
         $livro6->autores()->attach(6);
 
         $livro7 = Livro::create([
@@ -82,6 +90,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/sentimentomundo.jpg',
             'preco' => 18.50
         ]);
+        // Associa livro ao autor com ID 7 (Carlos Drummond de Andrade).
         $livro7->autores()->attach(7);
 
         $livro8 = Livro::create([
@@ -92,6 +101,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/policarpoquaresma.jpg',
             'preco' => 17.90
         ]);
+        // Associa livro ao autor com ID 8 (Lima Barreto).
         $livro8->autores()->attach(8);
 
         $livro9 = Livro::create([
@@ -102,6 +112,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/cegueira.jpg',
             'preco' => 24.90
         ]);
+        // Associa livro ao autor com ID 1 (Jose Saramago).
         $livro9->autores()->attach(1);
 
         $livro10 = Livro::create([
@@ -112,6 +123,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/cortico.jpg',
             'preco' => 20.00
         ]);
+        // Associa livro ao autor com ID 9 (Carlos Marques Pereira, conforme seed).
         $livro10->autores()->attach(9);
 
         $livro11 = Livro::create([
@@ -122,6 +134,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/mensagem.jpg',
             'preco' => 19.00
         ]);
+        // Associa livro ao autor com ID 10 (Fernando Pessoa).
         $livro11->autores()->attach(10);
 
         $livro12 = Livro::create([
@@ -132,6 +145,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/primobasilio.jpg',
             'preco' => 21.50
         ]);
+        // Associa livro ao autor com ID 1 (Jose Saramago).
         $livro12->autores()->attach(1);
 
         $livro13 = Livro::create([
@@ -142,6 +156,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/mulato.jpg',
             'preco' => 18.90
         ]);
+        // Associa livro ao autor com ID 9.
         $livro13->autores()->attach(9);
 
         $livro14 = Livro::create([
@@ -152,7 +167,8 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/brascubas.jpg',
             'preco' => 26.90
         ]);
-        $livro14->autores()->attach(2); 
+        // Associa livro ao autor com ID 2 (Machado de Assis).
+        $livro14->autores()->attach(2);
 
         $livro15 = Livro::create([
             'isbn' => '9788522006214',
@@ -162,6 +178,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/vidassecas.jpg',
             'preco' => 19.50
         ]);
+        // Associa livro ao autor com ID 2.
         $livro15->autores()->attach(2);
 
         $livro16 = Livro::create([
@@ -172,6 +189,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/corvo.jpg',
             'preco' => 17.00
         ]);
+        // Associa livro ao autor com ID 3 (George Orwell).
         $livro16->autores()->attach(3);
 
         $livro17 = Livro::create([
@@ -182,6 +200,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/revolucaobichos.jpg',
             'preco' => 22.00
         ]);
+        // Associa livro ao autor com ID 3.
         $livro17->autores()->attach(3);
 
         $livro18 = Livro::create([
@@ -192,6 +211,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/zahir.jpg',
             'preco' => 24.90
         ]);
+        // Associa livro ao autor com ID 4.
         $livro18->autores()->attach(4);
 
         $livro19 = Livro::create([
@@ -202,6 +222,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/paixaoghn.jpg',
             'preco' => 23.00
         ]);
+        // Associa livro ao autor com ID 5.
         $livro19->autores()->attach(5);
 
         $livro20 = Livro::create([
@@ -212,8 +233,10 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/quincasborba.jpg',
             'preco' => 25.50
         ]);
+        // Associa livro ao autor com ID 2.
         $livro20->autores()->attach(2);
 
+        // Bloco especial: colecao Harry Potter com autora unica (ID 11).
         $livro21 = Livro::create([
             'isbn' => '9788532530787',
             'nome' => 'Harry Potter e a Pedra Filosofal',
@@ -222,6 +245,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/harrypotter1.jpg',
             'preco' => 34.90
         ]);
+        // Associa livro ao autor com ID 11 (J.K. Rowling).
         $livro21->autores()->attach(11);
 
         $livro22 = Livro::create([
@@ -232,6 +256,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/harrypotter2.jpg',
             'preco' => 36.90
         ]);
+        // Associa livro ao autor com ID 11.
         $livro22->autores()->attach(11);
 
         $livro23 = Livro::create([
@@ -242,6 +267,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/harrypotter3.jpg',
             'preco' => 38.90
         ]);
+        // Associa livro ao autor com ID 11.
         $livro23->autores()->attach(11);
 
         $livro24 = Livro::create([
@@ -252,6 +278,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/harrypotter4.jpg',
             'preco' => 41.90
         ]);
+        // Associa livro ao autor com ID 11.
         $livro24->autores()->attach(11);
 
         $livro25 = Livro::create([
@@ -262,6 +289,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/harrypotter5.jpg',
             'preco' => 43.90
         ]);
+        // Associa livro ao autor com ID 11.
         $livro25->autores()->attach(11);
 
         $livro26 = Livro::create([
@@ -272,6 +300,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/harrypotter6.jpg',
             'preco' => 44.90
         ]);
+        // Associa livro ao autor com ID 11.
         $livro26->autores()->attach(11);
 
         $livro27 = Livro::create([
@@ -282,6 +311,7 @@ class LivroSeeder extends Seeder
             'imagem_capa' => 'images/capas/harrypotter7.jpg',
             'preco' => 46.90
         ]);
+        // Associa livro ao autor com ID 11.
         $livro27->autores()->attach(11);
     }
 }

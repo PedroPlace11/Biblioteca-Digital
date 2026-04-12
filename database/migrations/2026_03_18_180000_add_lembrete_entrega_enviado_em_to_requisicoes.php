@@ -12,7 +12,9 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        // Adiciona timestamp para registar quando o lembrete de devolucao foi enviado.
         Schema::table('requisicoes', function (Blueprint $table) {
+            // Null indica que o lembrete ainda nao foi disparado para a requisicao.
             $table->timestamp('lembrete_devolucao_enviado_em')->nullable()->after('data_fim_prevista');
         });
     }
@@ -22,6 +24,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        // Remove a coluna de controlo para restaurar o schema anterior.
         Schema::table('requisicoes', function (Blueprint $table) {
             $table->dropColumn('lembrete_devolucao_enviado_em');
         });

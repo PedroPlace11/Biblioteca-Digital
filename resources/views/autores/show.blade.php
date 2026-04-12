@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Página de detalhe do autor com livros e editoras relacionadas. --}}
     <div class="p-8 max-w-5xl mx-auto">
         {{-- Botão de retorno para a lista de autores --}}
         <div class="mb-6 text-left">
@@ -67,6 +68,7 @@
 
             <div class="flex flex-wrap justify-center gap-4">
                 @foreach ($editoras as $editora)
+                        {{-- Cada cartão leva para o detalhe da editora associada. --}}
                         <a href="{{ route('editoras.show', $editora) }}"
                         class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow flex items-center gap-3 px-4 py-3"
                         style="width: 220px;">

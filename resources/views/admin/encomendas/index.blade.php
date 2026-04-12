@@ -1,10 +1,30 @@
 <x-app-layout>
     <div class="p-6 max-w-7xl mx-auto">
+        {{-- Cabecalho da pagina com contexto rapido para o administrador. --}}
         <div class="mb-6">
             <h1 class="text-3xl font-bold text-slate-900">Gerir Encomendas</h1>
-            <p class="text-slate-500 mt-1">Listagem de encomendas pagas e pendentes de pagamento.</p>
+            <p class="text-slate-500 mt-1">Listagem de encomendas pendentes e enviadas.</p>
         </div>
 
+        {{-- Cards-resumo de estado para monitorizacao imediata. --}}
+        <div class="grid grid-cols-1 gap-4 mb-6 md:grid-cols-3">
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Encomendas enviadas</p>
+                <p class="mt-2 text-4xl font-bold text-slate-900">{{ $contagemEnviadas ?? 0 }}</p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Encomendas pendentes</p>
+                <p class="mt-2 text-4xl font-bold text-slate-900">{{ $contagemPendentes ?? 0 }}</p>
+            </div>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Encomendas recusadas</p>
+                <p class="mt-2 text-4xl font-bold text-slate-900">{{ $contagemRecusadas ?? 0 }}</p>
+            </div>
+        </div>
+
+        {{-- Filtros de pesquisa por texto e estado. --}}
         <div class="rounded-2xl border border-slate-200 bg-white p-4 mb-5">
             <form method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
                 <div>
@@ -15,11 +35,10 @@
                 <div>
                     <label class="label"><span class="label-text">Estado</span></label>
                     <select name="estado" class="select select-bordered w-full">
-                        <option value="todas" @selected($estado === 'todas')>Todas</option>
-                        <option value="pendente_pagamento" @selected($estado === 'pendente_pagamento')>Pendente pagamento</option>
-                        <option value="paga" @selected($estado === 'paga')>Paga</option>
-                        <option value="enviado" @selected($estado === 'enviado')>Enviado</option>
-                        <option value="pagamento_recusado" @selected($estado === 'pagamento_recusado')>Pagamento recusado</option>
+                        <option value="todos" {{ ($estadoFiltro ?? 'todos') === 'todos' ? 'selected' : '' }}>Todos</option>
+                        <option value="pendente" {{ ($estadoFiltro ?? 'todos') === 'pendente' ? 'selected' : '' }}>Pendente</option>
+                        <option value="enviado" {{ ($estadoFiltro ?? 'todos') === 'enviado' ? 'selected' : '' }}>Enviado</option>
+                        <option value="recusado" {{ ($estadoFiltro ?? 'todos') === 'recusado' ? 'selected' : '' }}>Recusado</option>
                     </select>
                 </div>
 
@@ -30,9 +49,11 @@
             </form>
         </div>
 
+        {{-- Lista de encomendas com detalhes de cliente, estado e totais. --}}
         <div class="space-y-4">
             @forelse ($encomendas as $encomenda)
                 @php
+                    // Calcula componentes financeiros exibidos no card.
                     $subtotal = (float) $encomenda->itens->sum('subtotal');
                     $portes = $subtotal < 50 ? 1.99 : 0.0;
                     $quantidadeItens = (int) $encomenda->itens->sum('quantidade');
@@ -43,14 +64,17 @@
                 <div class="rounded-2xl border border-slate-200 bg-white p-5">
                     <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
                         <div>
+                            {{-- Identificacao da encomenda e dados do cidadao. --}}
                             <p class="text-sm text-slate-500">Encomenda #{{ $encomenda->id }}</p>
                             <p class="text-sm text-slate-500">Criada em {{ $encomenda->created_at?->format('d/m/Y H:i') }}</p>
                             <p class="text-sm text-slate-500">N.º leitor: {{ $encomenda->user?->numero_leitor ?? '-' }}</p>
+                            <p class="text-sm text-slate-500">NIF: {{ $encomenda->fatura_com_nif ? ($encomenda->fatura_nif ?? '-') : 'Sem NIF' }}</p>
                             <p class="text-sm text-slate-500">Cidadão: {{ $encomenda->user?->name ?? 'Utilizador removido' }}</p>
                             <p class="text-sm text-slate-500">Email: {{ $encomenda->user?->email ?? '-' }}</p>
                         </div>
 
                         <div class="text-left lg:text-right">
+                            {{-- Badge de estado com contexto adicional conforme fase do pedido. --}}
                             @if ($encomenda->estado === 'paga')
                                 <span class="badge border-emerald-500 text-emerald-700 bg-emerald-50">Paga</span>
                                 <p class="text-xs text-slate-500 mt-1">Pago em {{ $encomenda->pago_em?->format('d/m/Y H:i') ?? '-' }}</p>
@@ -64,6 +88,7 @@
                             @endif
 
                             <div class="mt-2 space-y-1 text-sm text-slate-600">
+                                {{-- Bloco de resumo monetario (portes, desconto e total final). --}}
                                 <div class="flex items-center justify-between gap-4">
                                     <span>Portes</span>
                                     <span class="font-semibold text-slate-900">{{ number_format($portes, 2, ',', '.') }} &euro;</span>
@@ -89,6 +114,7 @@
                     </div>
 
                     <div class="mt-4 overflow-x-auto">
+                        {{-- Itens da encomenda em formato tabular. --}}
                         <table class="table table-sm">
                             <thead>
                                 <tr>
@@ -112,12 +138,14 @@
                     </div>
                 </div>
             @empty
+                {{-- Estado vazio quando nao ha registos para os filtros aplicados. --}}
                 <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500">
                     Sem encomendas para os filtros selecionados.
                 </div>
             @endforelse
         </div>
 
+        {{-- Paginação simplificada (anterior/proxima). --}}
         <div class="pagination-custom mt-6">
             <div class="join grid grid-cols-2 w-56 mx-auto">
                 @if ($encomendas->onFirstPage())

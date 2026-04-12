@@ -23,6 +23,9 @@ class Kernel extends ConsoleKernel
     {
         // Processa lembretes de carrinho abandonado em intervalos curtos.
         $schedule->command('carrinho:notificar-abandonados')->everyFiveMinutes();
+
+        // Cancela encomendas pendentes de pagamento apos 7 dias sem liquidacao.
+        $schedule->command('encomendas:cancelar-pendentes-multibanco')->daily();
     }
 
     /**
@@ -30,6 +33,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands(): void
     {
+        // Carrega automaticamente os comandos Artisan personalizados da aplicacao.
         $this->load(__DIR__.'/Commands');
         require base_path('routes/console.php');
     }

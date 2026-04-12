@@ -11,8 +11,10 @@
         {{-- Define nome da aplicação e título da página conforme rota de autenticação atual --}}
         @php
             $configuredName = config('app.name');
+            // Normaliza o nome da aplicação para o layout público também.
             $appName = empty($configuredName) || $configuredName === 'Laravel' ? 'Biblioteca' : $configuredName;
             $routeName = request()->route()?->getName();
+            // Usa títulos específicos para cada página de autenticação pública.
             $routeTitles = [
                 'login' => 'Login',
                 'register' => 'Registar',
@@ -50,8 +52,10 @@
     <body>
         {{-- Slot principal onde o conteúdo da view convidada é renderizado --}}
         <div class="font-sans text-gray-900 antialiased min-h-screen flex flex-col">
+            {{-- Aqui entra o conteúdo de login, registo e recuperação de senha. --}}
             {{ $slot }}
 
+            {{-- Rodapé simples partilhado pelas páginas públicas. --}}
             <footer class="footer footer-center p-6 bg-base-100 border-t border-gray-100 mt-auto">
                 <p>Biblioteca Digital © {{ date('Y') }}</p>
             </footer>

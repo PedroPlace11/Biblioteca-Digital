@@ -106,6 +106,7 @@
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-3 min-w-0">
                                     @php
+                                        // Resolve imagem de perfil com fallback para URL padrão do utilizador.
                                         $user = auth()->user();
                                         $foto = $user->profile_photo_path ? asset('storage/'.$user->profile_photo_path) : $user->profile_photo_url;
                                     @endphp
@@ -162,11 +163,13 @@
 
     {{-- Script para atualizar automaticamente o histórico de requisições se houver mudanças no servidor --}}
     <script>
+        // Faz polling leve para recarregar o dashboard quando houver novas atualizações.
         document.addEventListener('DOMContentLoaded', function () {
             let ultimaAtualizacaoLocal = Number(@json((int) ($ultimaAtualizacaoRequisicoesTs ?? 0)));
             const endpointAtualizacao = @json(route('requisicoes.last-update'));
 
             setInterval(async function () {
+                // Evita requisições desnecessárias quando o separador está em segundo plano.
                 if (document.hidden) {
                     return;
                 }
@@ -188,6 +191,7 @@
                     const ultimaAtualizacaoServidor = Number(data.last_update_ts || 0);
 
                     if (ultimaAtualizacaoServidor > ultimaAtualizacaoLocal) {
+                        // Recarrega para refletir mudanças de estado das requisições.
                         window.location.reload();
                     }
                 } catch (error) {
