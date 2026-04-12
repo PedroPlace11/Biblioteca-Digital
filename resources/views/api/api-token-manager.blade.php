@@ -38,10 +38,12 @@
         </x-slot>
 
         <x-slot name="actions">
+            {{-- Feedback visual quando o token é criado com sucesso. --}}
             <x-action-message class="me-3" on="created">
                 {{ __('Criado.') }}
             </x-action-message>
 
+            {{-- Dispara a ação Livewire para gerar um novo token. --}}
             <x-button>
                 {{ __('Criar') }}
             </x-button>
@@ -75,6 +77,7 @@
 
                                 <div class="flex items-center ms-2">
                                     @if ($token->last_used_at)
+                                        {{-- Mostra atividade recente para ajudar auditoria de uso. --}}
                                         <div class="text-sm text-gray-400">
                                             {{ __('Ultima utilizacao') }} {{ $token->last_used_at->diffForHumans() }}
                                         </div>
@@ -120,6 +123,7 @@
         </x-slot>
 
         <x-slot name="footer">
+            {{-- Fecha modal após cópia do token em texto simples. --}}
             <x-secondary-button wire:click="$set('displayingToken', false)" wire:loading.attr="disabled">
                 {{ __('Fechar') }}
             </x-secondary-button>
@@ -145,10 +149,12 @@
         </x-slot>
 
         <x-slot name="footer">
+            {{-- Cancela edição de permissões sem persistir alterações. --}}
             <x-secondary-button wire:click="$set('managingApiTokenPermissions', false)" wire:loading.attr="disabled">
                 {{ __('Cancelar') }}
             </x-secondary-button>
 
+            {{-- Persiste permissões selecionadas para o token atual. --}}
             <x-button class="ms-3" wire:click="updateApiToken" wire:loading.attr="disabled">
                 {{ __('Guardar') }}
             </x-button>
@@ -167,10 +173,12 @@
         </x-slot>
 
         <x-slot name="footer">
+            {{-- Fecha confirmação sem remover o token selecionado. --}}
             <x-secondary-button wire:click="$toggle('confirmingApiTokenDeletion')" wire:loading.attr="disabled">
                 {{ __('Cancelar') }}
             </x-secondary-button>
 
+            {{-- Confirma eliminação definitiva do token de API. --}}
             <x-danger-button class="ms-3" wire:click="deleteApiToken" wire:loading.attr="disabled">
                 {{ __('Eliminar') }}
             </x-danger-button>

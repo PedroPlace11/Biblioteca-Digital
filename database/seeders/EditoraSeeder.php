@@ -14,6 +14,7 @@ class EditoraSeeder extends Seeder
     /** Executa a carga inicial de editoras. */
     public function run()
     {
+        // Editoras base usadas para compor o catalogo de livros no ambiente local.
         Editora::create([
             'nome' => 'Penguin',
             'logotipo' => 'images/editoras/penguin.png'
@@ -46,6 +47,8 @@ class EditoraSeeder extends Seeder
             'nome' => 'Record',
             'logotipo' => 'images/editoras/record.png'
         ]);
+
+        // O campo logotipo armazena caminho relativo para renderizacao das marcas no frontend.
     }
 }
 

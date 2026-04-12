@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Biblioteca Chart.js para renderizar o gráfico de editoras no painel. --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <div class="p-6 max-w-7xl mx-auto">
@@ -79,6 +80,7 @@
         </h2>
         <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-10">
             @foreach ($ultimosLivros as $livro)
+                {{-- Card de livro recente com capa, autores e preço. --}}
                 <a href="{{ route('livros.show', $livro) }}" class="card bg-base-100 shadow hover:shadow-lg">
                     @if ($livro->imagem_capa)
                         <img src="{{ asset($livro->imagem_capa) }}" class="h-60 object-cover">
@@ -170,6 +172,7 @@
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             @foreach ($todasRequisicoes as $requisicao)
+                                {{-- Linha individual da requisição com snapshot de cidadão e datas. --}}
                                 <tr class="hover:bg-gray-50 transition">
                                     <td class="py-3 pr-4">
                                         <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-700">
@@ -242,6 +245,7 @@
         @if ($minhasRequisicoesAdmin->count() > 0)
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach ($minhasRequisicoesAdmin as $requisicao)
+                    {{-- Card do histórico pessoal do admin com estado e metadados do livro. --}}
                     <a href="{{ route('livros.show', $requisicao->livro) }}" class="card bg-base-100 shadow hover:shadow-lg">
                         <div class="card-body p-4">
                             <div class="flex items-start justify-between gap-3">
@@ -333,6 +337,7 @@
             }
 
             requisicoesSection.querySelectorAll('a[href]').forEach(function (link) {
+                // Guarda posição também ao trocar de página via links da secção.
                 link.addEventListener('click', function () {
                     saveScrollPosition();
                 });
@@ -344,6 +349,7 @@
         new Chart(ctx, {
             type: 'bar',
             data: {
+                // Labels e contagens vêm do backend agregadas por editora.
                 labels: [
                     @foreach ($livrosPorEditora as $editora)
                         "{{ $editora->nome }}",

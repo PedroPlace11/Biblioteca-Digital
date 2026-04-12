@@ -13,7 +13,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Adiciona coluna bibliografia na tabela de autores.
         Schema::table('autors', function (Blueprint $table) {
+            // Campo opcional para biografia/descricao do autor, posicionado apos a foto.
             $table->text('bibliografia')->nullable()->after('foto');
         });
     }
@@ -23,6 +25,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Remove a coluna bibliografia para restaurar o schema anterior.
         Schema::table('autors', function (Blueprint $table) {
             $table->dropColumn('bibliografia');
         });

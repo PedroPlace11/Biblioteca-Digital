@@ -136,8 +136,40 @@
 
                 {{-- Dropdown de notificações do usuário --}}
                 @php
-                    $unreadNotificationsCount = Auth::user()->unreadNotifications()->count();
-                    $topNotifications = Auth::user()->notifications()->latest()->take(8)->get();
+                    $allNotifications = Auth::user()->notifications()->latest()->take(50)->get();
+
+                    $encomendaIds = $allNotifications
+                        ->pluck('data.encomenda_id')
+                        ->filter()
+                        ->map(fn ($id) => (int) $id)
+                        ->unique()
+                        ->values();
+
+                    $encomendasFinalizadas = $encomendaIds->isEmpty()
+                        ? collect()
+                        : \App\Models\Encomenda::query()
+                            ->whereIn('id', $encomendaIds)
+                            ->where('estado', 'enviado')
+                            ->pluck('id')
+                            ->map(fn ($id) => (int) $id);
+
+                    $isNotificationVisible = function ($notification) use ($encomendasFinalizadas) {
+                        $titulo = Str::lower((string) ($notification->data['title'] ?? ''));
+                        $isEncomendaNotif = str_contains($titulo, 'encomenda');
+
+                        if (! $isEncomendaNotif) {
+                            return true;
+                        }
+
+                        $encomendaId = (int) ($notification->data['encomenda_id'] ?? 0);
+
+                        return $encomendaId > 0 && $encomendasFinalizadas->contains($encomendaId);
+                    };
+
+                    $filteredNotifications = $allNotifications->filter($isNotificationVisible)->values();
+
+                    $unreadNotificationsCount = $filteredNotifications->whereNull('read_at')->count();
+                    $topNotifications = $filteredNotifications->take(8);
                 @endphp
 
                 <div class="ms-3 relative">
@@ -224,29 +256,19 @@
                                                         $reviewUrl = $notification->data['review_url'] ?? null;
                                                         $livroUrl = $notification->data['livro_url'] ?? null;
                                                         $carrinhoUrl = $notification->data['carrinho_url'] ?? null;
-                                                        $adminReviewsUrl = route('admin.reviews.index');
+                                                        $destinoNotificacao = match (true) {
+                                                            $isReview && Auth::user()->role === 'admin' && !empty($reviewUrl) => $reviewUrl,
+                                                            $isReview && Auth::user()->role === 'cidadao' && !empty($reviewUrl) => $reviewUrl,
+                                                            $isReview => route('cidadao.reviews.index'),
+                                                            $isRecepcao && !empty($livroUrl) => $livroUrl,
+                                                            $isLivroDisponivel && !empty($livroUrl) => $livroUrl,
+                                                            $isCarrinhoNotif => route('carrinho.index'),
+                                                            ($isEncomendaNotif || $isPagamentoNotif) && !empty($encomendaUrl) => $encomendaUrl,
+                                                            ($isConfirmacao || $isDevolucao) && !empty($livroUrl) => $livroUrl,
+                                                            default => url()->current(),
+                                                        };
                                                     @endphp
-                                                    <input type="hidden" name="redirect_to" value="
-                                                        @if($isReview && Auth::user()->role === 'admin' && $reviewUrl)
-                                                            {{ $reviewUrl }}
-                                                        @elseif($isReview && Auth::user()->role === 'cidadao' && $reviewUrl)
-                                                            {{ $reviewUrl }}
-                                                        @elseif($isReview)
-                                                            {{ route('cidadao.reviews.index') }}
-                                                        @elseif($isRecepcao && $livroUrl)
-                                                            {{ $livroUrl }}
-                                                        @elseif($isLivroDisponivel && $livroUrl)
-                                                            {{ $livroUrl }}
-                                                        @elseif($isCarrinhoNotif && $carrinhoUrl)
-                                                            {{ $carrinhoUrl }}
-                                                        @elseif(($isEncomendaNotif || $isPagamentoNotif) && $encomendaUrl)
-                                                            {{ $encomendaUrl }}
-                                                        @elseif(($isConfirmacao || $isDevolucao) && $livroUrl)
-                                                            {{ $livroUrl }}
-                                                        @else
-                                                            {{ url()->current() }}
-                                                        @endif
-                                                    ">
+                                                    <input type="hidden" name="redirect_to" value="{{ $destinoNotificacao }}">
                                                     <button type="submit" class="text-xs font-semibold text-sky-700 hover:text-sky-800">Ver detalhes</button>
                                                 </form>
                                                 <div class="flex items-center gap-2">

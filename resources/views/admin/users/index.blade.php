@@ -403,10 +403,12 @@
                         </thead>
                         <tbody>
                             @forelse ($admins as $admin)
+                                {{-- Linha por administrador com destaque visual da conta autenticada. --}}
                                 <tr class="{{ Auth::id() === $admin->id ? 'mg-row-current' : '' }}">
                                     <td>
                                         <div class="mg-user-cell">
                                             @php
+                                                // Resolve URL da foto priorizando ficheiro local no storage.
                                                 $foto = $admin->profile_photo_path ? asset('storage/'.$admin->profile_photo_path) : $admin->profile_photo_url;
                                             @endphp
                                             <img src="{{ $foto }}" alt="{{ $admin->name }}" class="mg-avatar">
@@ -436,11 +438,13 @@
                                     </td>
                                     <td>
                                         @if (Auth::id() === $admin->id)
+                                            {{-- Bloqueia auto-remoção para proteger sessão e controlo de acesso. --}}
                                             <span class="mg-self-note">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                                                 Não é possível apagar
                                             </span>
                                         @else
+                                            {{-- Formulário de remoção sujeito à confirmação na modal JS. --}}
                                             <form method="POST" action="{{ route('admins.destroy', $admin) }}" class="js-admin-delete-form">
                                                 @csrf
                                                 @method('DELETE')
@@ -453,6 +457,7 @@
                                     </td>
                                 </tr>
                             @empty
+                                {{-- Estado vazio quando não existem admins para listar. --}}
                                 <tr>
                                     <td colspan="5">
                                         <div class="mg-empty">
@@ -469,6 +474,7 @@
 
             {{-- Modal de confirmação usada antes de apagar um administrador. --}}
             <div id="delete-admin-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+                {{-- Backdrop para focar a confirmação e bloquear interação com o fundo. --}}
                 <div class="absolute inset-0 bg-black/45"></div>
                 <div class="relative w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
                     <h3 class="text-lg font-bold text-gray-900">Confirmar apagamento</h3>

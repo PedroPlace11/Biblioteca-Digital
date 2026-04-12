@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Lista principal do catálogo com filtros, vistas e ações administrativas. --}}
     {{-- Popup de aviso exibido quando há mensagem de informação na sessão --}}
     @if (session('popup_info'))
         <div id="livros-popup-info" class="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -64,6 +65,7 @@
         {{-- Botões de ações administrativas, visíveis apenas para admin --}}
         @if ($isAdmin)
             <div class="flex flex-wrap gap-2 mb-6">
+                {{-- Ações rápidas disponíveis apenas para utilizadores administradores. --}}
                 <a href="{{ route('livros.create') }}" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white">Novo Livro</a>
                 <a href="{{ route('livros.export') }}" class="btn btn-outline">Exportar para Excel</a>
                 <a href="{{ route('livros.googlebooks') }}" class="btn bg-black text-white border-black hover:bg-gray-900 hover:text-white">Buscar na Google Books</a>
@@ -72,6 +74,7 @@
 
         {{-- Filtros de pesquisa e ordenação de livros --}}
         <form method="GET" action="{{ route('livros.index') }}" class="mb-6 p-4 rounded-xl border border-gray-100 bg-gray-50/60">
+            {{-- Filtros de pesquisa e ordenação aplicados à listagem. --}}
             <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                 <div class="md:col-span-3">
                     <label class="block text-xs uppercase tracking-wide text-gray-500 mb-1">Pesquisa</label>
@@ -109,6 +112,7 @@
         @if ($livros->count() > 0)
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div class="mb-4 flex justify-end">
+                    {{-- Botão alterna entre tabela e cartões sem recarregar a página. --}}
                     <button
                         type="button"
                         id="livros-view-toggle"
@@ -126,6 +130,7 @@
                 </div>
 
                 <div id="livros-list-view">
+                {{-- Vista em tabela para análise rápida de muitos livros. --}}
                 <div class="overflow-x-auto">
                     <table class="table w-full text-sm">
                         <thead>
@@ -144,6 +149,7 @@
 
                             @foreach ($livros as $livro)
                                 @php
+                                    // Calcula se o livro está indisponível com base nas requisições ativas.
                                     $indisponivel = ($livro->requisicoes_count ?? 0) > 0;
                                 @endphp
                                 <tr class="hover:bg-gray-50 transition">
@@ -213,9 +219,11 @@
                 </div>
 
                 <div id="livros-cards-view" class="hidden">
+                    {{-- Vista alternativa em cartões com ações contextuais. --}}
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                         @foreach ($livros as $livro)
                             @php
+                                // Reutiliza a mesma regra de indisponibilidade da vista em tabela.
                                 $indisponivel = ($livro->requisicoes_count ?? 0) > 0;
                             @endphp
                             <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg animate-[fadeIn_.35s_ease-out_both]" style="animation-delay: {{ $loop->index * 60 }}ms;">
@@ -371,6 +379,7 @@
     @endif
 
     <script>
+        // Persiste a preferência de apresentação entre lista e cartões.
         document.addEventListener('DOMContentLoaded', function () {
             var toggleBtn = document.getElementById('livros-view-toggle');
             var toggleIcon = document.getElementById('livros-view-toggle-icon');

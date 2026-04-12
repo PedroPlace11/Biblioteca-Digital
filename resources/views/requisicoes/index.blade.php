@@ -1,5 +1,6 @@
 <x-app-layout>
     <div class="p-6 max-w-7xl mx-auto">
+    {{-- Página de requisições com métricas, filtros e vista em tabela/cards. --}}
         {{-- Cabeçalho da página com título e data atual --}}
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-8">
             <div>
@@ -52,6 +53,7 @@
 
         {{-- Formulário de filtros para busca de livros por autor, editora, disponibilidade e ordenação --}}
         <form method="GET" action="{{ route('requisicoes.index') }}" class="mb-6 p-4 rounded-xl border border-gray-100 bg-gray-50/60">
+            {{-- Os filtros seguem o estado atual da pesquisa para facilitar refinamento. --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {{-- Filtro por autor --}}
                 <div>
@@ -60,6 +62,7 @@
                             <option value="">Todos os autores</option>
                             @foreach ($autores as $autor)
                                 <option value="{{ $autor->id }}" {{ (string) $autorId === (string) $autor->id ? 'selected' : '' }}>
+                                {{-- Cada opção representa um autor disponível no catálogo. --}}
                                     {{ $autor->nome }}
                                 </option>
                             @endforeach
@@ -73,6 +76,7 @@
                             <option value="">Todas as editoras</option>
                             @foreach ($editoras as $editora)
                                 <option value="{{ $editora->id }}" {{ (string) $editoraId === (string) $editora->id ? 'selected' : '' }}>
+                                {{-- Cada opção representa uma editora disponível no catálogo. --}}
                                     {{ $editora->nome }}
                                 </option>
                             @endforeach
@@ -121,6 +125,7 @@
         @if ($livros->count() > 0)
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div class="mb-4 flex justify-end">
+                    {{-- Alterna entre tabela e cartões sem recarregar a página. --}}
                     <button
                         type="button"
                         id="requisicoes-view-toggle"
@@ -153,6 +158,7 @@
                         <tbody class="divide-y divide-gray-50">
                             @foreach ($livros as $livro)
                                 <tr class="hover:bg-gray-50 transition">
+                                {{-- Linha com capa, metadados, disponibilidade e ação de ver. --}}
                                     {{-- Coluna da capa do livro ou placeholder --}}
                                     <td class="py-3">
                                         @if ($livro->imagem_capa)
@@ -172,6 +178,7 @@
                                                 <span class="text-gray-300">|</span>
                                             @endif
                                             <span>{{ $autor->nome }}</span>
+                                            {{-- Mostra todos os autores associados ao livro. --}}
                                         @endforeach
                                     </td>
                                     {{-- Coluna da editora --}}
@@ -200,6 +207,7 @@
                         @foreach ($livros as $livro)
                             @php
                                 $indisponivel = ($livro->requisicoes_count ?? 0) > 0;
+                                // Reutiliza a mesma regra de disponibilidade na vista em cartões.
                             @endphp
                             <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                                 <div class="flex gap-4">
@@ -248,6 +256,7 @@
         @if ($livros->hasPages())
         <div class="pagination-custom mt-6">
             <div class="join grid grid-cols-2 w-56 mx-auto">
+                    {{-- Navegação paginada padrão do catálogo de requisições. --}}
                 @if ($livros->onFirstPage())
                     <button class="join-item btn bg-black text-white font-semibold w-full py-1 px-2 text-sm" disabled>Página anterior</button>
                 @else

@@ -1,5 +1,6 @@
 <x-app-layout>
 <div class="max-w-7xl mx-auto p-6">
+    {{-- Cabeçalho da listagem de reviews submetidos pelo cidadão. --}}
     <h1 class="text-2xl font-bold mb-6">Meus Reviews Submetidos</h1>
 
     {{-- Filtros de busca --}}
@@ -28,6 +29,7 @@
             <a href="?" class="px-4 py-2 rounded bg-white text-black font-bold border border-black">Limpar</a>
         </div>
     </form>
+    {{-- Tabela principal com estado e ações por review. --}}
     <div class="overflow-x-auto bg-white rounded-xl shadow">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -40,9 +42,11 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @foreach($reviews as $review)
+                {{-- Linha do review com estado de moderação e acesso ao detalhe. --}}
                 <tr>
                     <td class="px-4 py-2">{{ $review->livro->nome ?? '-' }}</td>
                     <td class="px-4 py-2">
+                        {{-- Badge textual traduz o estado interno para linguagem de interface. --}}
                         @if($review->estado === 'ativo')
                             <span class="text-green-600 font-semibold">Aprovado</span>
                         @elseif($review->estado === 'recusado')

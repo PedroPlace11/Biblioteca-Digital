@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Pesquisa externa integrada com importação de resultados do Google Books. --}}
     <div class="w-full bg-gray-50 px-6 py-4 mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Buscar Livros na Google Books</h1>
@@ -15,6 +16,7 @@
         {{-- Pesquisa centralizada sem card --}}
         <div class="mb-10 flex flex-col items-center justify-center w-full">
             <form method="GET" action="{{ route('livros.googlebooks') }}" class="w-full max-w-xl mx-auto">
+                {{-- Campo de pesquisa principal com histórico de consultas recentes. --}}
                 <label class="block text-xs uppercase tracking-wide text-gray-500 mb-1">Pesquisa</label>
                 <div class="flex w-full gap-2 mb-2">
                     <input type="text" name="q"
@@ -38,6 +40,7 @@
                     @endif
                 </div>
                 @if(isset($pesquisasRecentes) && count($pesquisasRecentes) > 0)
+                    {{-- Chips com pesquisas anteriores para acesso rápido. --}}
                     <div class="flex flex-wrap gap-2 mb-2">
                         @foreach($pesquisasRecentes as $pesquisa)
                             <a href="{{ route('livros.googlebooks', ['q' => $pesquisa]) }}" class="px-3 py-1 rounded bg-gray-200 text-gray-700 text-xs font-medium hover:bg-gray-300 transition">{{ $pesquisa }}</a>
@@ -53,6 +56,7 @@
                 <h2 class="text-2xl font-bold mb-4">Últimos Livros Adicionados</h2>
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
                     @foreach($ultimosLivros as $livro)
+                        {{-- Card de livros já armazenados no catálogo local. --}}
                         <a href="{{ route('livros.show', $livro) }}" class="card bg-base-100 shadow hover:shadow-lg transition block">
                             @if($livro->imagem_capa ?? $livro->capa_url)
                                 <img src="{{ asset($livro->imagem_capa ?? $livro->capa_url) }}" alt="Capa de {{ $livro->nome }}" class="h-60 w-full object-cover rounded-t" />
@@ -95,6 +99,7 @@
 
         @if (request('q') && !$nenhumResultado && !empty($resultados))
             @if (!empty($mensagem))
+                {{-- Toast informativo após salvar/importar um livro. --}}
                 <div id="toast-success" class="fixed top-6 right-6 z-50 flex items-center w-full max-w-xs p-4 mb-4 text-gray-900 bg-green-50 rounded-lg shadow border border-green-400 animate-fade-in-up" role="alert" style="display: none;">
                     <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg mr-3">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
@@ -103,6 +108,7 @@
                 </div>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
+                        // Exibe a notificação temporária e fecha-a automaticamente.
                         var toast = document.getElementById('toast-success');
                         if (toast) {
                             toast.style.display = 'flex';
@@ -129,6 +135,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     @foreach ($resultados as $idx => $item)
                         @php
+                            // Normaliza os dados devolvidos pela API antes de montar o cartão.
                             $info = $item['volumeInfo'] ?? [];
                             $isbn = $info['industryIdentifiers'][0]['identifier'] ?? '';
                             $autores = isset($info['authors']) ? implode(', ', $info['authors']) : '';
@@ -142,6 +149,7 @@
                         @endphp
                         <div class="bg-white rounded-xl shadow border border-gray-100 flex flex-col h-full">
                             <div class="flex justify-center items-center h-48 bg-gray-50 rounded-t-xl">
+                                {{-- Capa remota ou placeholder quando a API não devolve imagem. --}}
                                 @if ($capa_url)
                                     <img src="{{ $capa_url }}" class="h-44 object-contain rounded" alt="Capa do livro">
                                 @else
@@ -166,8 +174,10 @@
                                     @endif
                                 </p>
                                 <div class="mt-auto flex flex-row flex-nowrap gap-2">
+                                    {{-- Abre o resultado original no Google Books. --}}
                                     <a href="{{ $info['infoLink'] ?? '#' }}" target="_blank"
                                         class="btn btn-sm bg-black text-white border-black hover:bg-gray-900 hover:text-white">Ver Livro</a>
+                                    {{-- Submete os dados do volume para o catálogo local. --}}
                                     <form method="POST" action="{{ route('livros.googlebooks.salvar') }}">
                                         @csrf
                                         <input type="hidden" name="isbn" value="{{ $isbn }}">

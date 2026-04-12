@@ -51,6 +51,7 @@
         @if ($autores->count() > 0)
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div class="mb-4 flex justify-end">
+                    {{-- Botão alterna entre visualização em tabela e cartões. --}}
                     <button
                         type="button"
                         id="autores-view-toggle"
@@ -68,6 +69,7 @@
                 </div>
 
                 <div id="autores-list-view">
+                {{-- Vista em lista/tabular para leitura rápida de muitos autores. --}}
                 <div class="overflow-x-auto">
                     <table class="table w-full text-sm">
                         <thead>
@@ -131,6 +133,7 @@
                 </div>
 
                 <div id="autores-cards-view" class="hidden">
+                    {{-- Vista em cartões para navegação mais visual por autor. --}}
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                         @foreach ($autores as $autor)
                             <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
@@ -151,6 +154,7 @@
                                         <p class="text-sm text-gray-500 mt-1">{{ $autor->livros->count() }} livro(s) associado(s)</p>
 
                                         <div class="mt-3 text-sm text-gray-700">
+                                            {{-- Repete regra de até 4 livros também no modo cards. --}}
                                             @if ($autor->livros->count() > 0)
                                                 @foreach ($autor->livros->take(4) as $livro)
                                                     @if (!$loop->first)
@@ -204,6 +208,7 @@
     </div>
 
     <script>
+        // Controla o modo de visualização da listagem e persiste preferência no navegador.
         document.addEventListener('DOMContentLoaded', function () {
             var toggleBtn = document.getElementById('autores-view-toggle');
             var toggleIcon = document.getElementById('autores-view-toggle-icon');
@@ -214,6 +219,7 @@
                 return;
             }
 
+            // Retorna SVG do botão conforme a vista que ficará disponível no próximo clique.
             function iconFor(view) {
                 if (view === 'cards') {
                     return '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>';
@@ -222,6 +228,7 @@
                 return '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>';
             }
 
+            // Aplica classes/atributos de acessibilidade e guarda escolha no localStorage.
             function setView(view) {
                 if (view === 'cards') {
                     listView.classList.add('hidden');
@@ -243,8 +250,10 @@
             }
 
             var savedView = window.localStorage.getItem('autores_view_mode');
+            // Inicializa com preferência anterior; padrão é modo lista.
             setView(savedView === 'cards' ? 'cards' : 'list');
 
+            // Alterna entre vistas mantendo o mesmo conjunto de dados carregado.
             toggleBtn.addEventListener('click', function () {
                 var currentView = toggleBtn.dataset.view;
                 setView(currentView === 'list' ? 'cards' : 'list');

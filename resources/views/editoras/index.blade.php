@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Listagem de editoras com filtros, alternância de vista e paginação. --}}
     <div class="p-6 max-w-7xl mx-auto">
         {{-- Verifica se o usuário autenticado é admin para liberar ações administrativas --}}
         @php
@@ -51,6 +52,7 @@
         @if ($editoras->count() > 0)
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div class="mb-4 flex justify-end">
+                    {{-- Alterna entre listagem tabular e visualização em cartões. --}}
                     <button
                         type="button"
                         id="editoras-view-toggle"
@@ -68,6 +70,7 @@
                 </div>
 
                 <div id="editoras-list-view">
+                {{-- Vista principal em tabela para leitura rápida de muitos registos. --}}
                 <div class="overflow-x-auto">
                     <table class="table w-full text-sm">
                         <thead>
@@ -131,6 +134,7 @@
                 </div>
 
                 <div id="editoras-cards-view" class="hidden">
+                    {{-- Vista alternativa em cartões para navegação mais visual. --}}
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                         @foreach ($editoras as $editora)
                             <article class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
@@ -151,6 +155,7 @@
                                         <p class="text-sm text-gray-500 mt-1">{{ $editora->livros->count() }} livro(s) publicado(s)</p>
 
                                         <div class="mt-3 text-sm text-gray-700">
+                                            {{-- Repetição da listagem limitada a 4 livros nesta vista. --}}
                                             @if ($editora->livros->count() > 0)
                                                 @foreach ($editora->livros->take(4) as $livro)
                                                     @if (!$loop->first)
@@ -204,6 +209,7 @@
     </div>
 
     <script>
+        // Guarda a preferência de visualização no navegador do utilizador.
         document.addEventListener('DOMContentLoaded', function () {
             var toggleBtn = document.getElementById('editoras-view-toggle');
             var toggleIcon = document.getElementById('editoras-view-toggle-icon');
@@ -222,6 +228,7 @@
                 return '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" /></svg>';
             }
 
+            // Troca entre listas e cartões mantendo a escolha persistida.
             function setView(view) {
                 if (view === 'cards') {
                     listView.classList.add('hidden');
@@ -243,6 +250,7 @@
             }
 
             var savedView = window.localStorage.getItem('editoras_view_mode');
+            // Carrega a preferência salva; por omissão mostra a lista.
             setView(savedView === 'cards' ? 'cards' : 'list');
 
             toggleBtn.addEventListener('click', function () {

@@ -1,4 +1,5 @@
 <x-app-layout>
+    {{-- Container principal com largura controlada para formulário de criação. --}}
     <div class="p-6 max-w-5xl mx-auto">
         <div class="mb-6 text-left">
             {{-- Botão para voltar à listagem de autores. --}}
@@ -37,6 +38,7 @@
                                 class="input input-bordered w-full @error('nome') input-error @enderror"
                                 required>
                             @error('nome')
+                                {{-- Mensagem específica devolvida pela validação do campo nome. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -52,6 +54,7 @@
                                 placeholder="Escreva a biografia do autor..."
                                 class="textarea textarea-bordered w-full @error('bibliografia') textarea-error @enderror">{{ old('bibliografia') }}</textarea>
                             @error('bibliografia')
+                                {{-- Mensagem de erro para tamanho/formato da biografia. --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
@@ -68,6 +71,7 @@
                                 accept="image/*"
                                 class="file-input file-input-bordered w-full @error('foto') file-input-error @enderror">
                             @error('foto')
+                                {{-- Feedback para ficheiro inválido (tipo/tamanho). --}}
                                 <span class="text-error text-sm mt-1">{{ $message }}</span>
                             @enderror
                         </div>
