@@ -45,6 +45,8 @@ it('notifica cidadao por sininho e email quando carrinho fica abandonado por mai
         ->expectsOutputToContain('Notificações de carrinho abandonado processadas: 1')
         ->assertSuccessful();
 
+    Notification::assertSentToTimes($user, CarrinhoAbandonadoNotification::class, 2);
+
     Notification::assertSentTo(
         $user,
         CarrinhoAbandonadoNotification::class,
