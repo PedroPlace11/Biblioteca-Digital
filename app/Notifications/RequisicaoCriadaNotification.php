@@ -132,6 +132,8 @@ class RequisicaoCriadaNotification extends Notification
             // Timestamp ISO quando notificacao foi criada.
             'created_at' => now()->toIso8601String(),
         ];
+    }
+}
 
 
 

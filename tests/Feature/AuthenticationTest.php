@@ -3,6 +3,7 @@
 
 
 use App\Models\User;
+use App\Models\LogSistema;
 
 test('login screen can be rendered', function () {
     $response = $this->get('/login');
@@ -20,6 +21,8 @@ test('users can authenticate using the login screen', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
+
+    expect(LogSistema::query()->where('user_id', $user->id)->where('alteracao', 'Inicio de sessão')->exists())->toBeTrue();
 });
 
 test('users cannot authenticate with invalid password', function () {
@@ -31,5 +34,22 @@ test('users cannot authenticate with invalid password', function () {
     ]);
 
     $this->assertGuest();
+});
+
+test('new citizen registrations are written to logs', function () {
+    $response = $this->post('/register', [
+        'name' => 'Cidadao Novo',
+        'email' => 'cidadao.novo@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $response->assertStatus(302);
+
+    $user = User::query()->where('email', 'cidadao.novo@example.com')->first();
+
+    expect($user)->not->toBeNull();
+    expect(LogSistema::query()->where('user_id', $user->id)->exists())->toBeTrue();
+    expect(LogSistema::query()->where('user_id', $user->id)->where('alteracao', 'Criacao de conta de cidadao')->exists())->toBeTrue();
 });
 

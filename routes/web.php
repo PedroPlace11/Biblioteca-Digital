@@ -5,6 +5,7 @@ use App\Http\Controllers\AutorController;
 use App\Http\Controllers\EditoraController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\Admin\LogController as AdminLogController;
 use App\Http\Controllers\Admin\EncomendaController as AdminEncomendaController;
 use App\Http\Controllers\CarrinhoController;
 use App\Http\Controllers\Cidadao\EncomendaController as CidadaoEncomendaController;
@@ -203,6 +204,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('admin/reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
     Route::get('admin/reviews/{review}', [AdminReviewController::class, 'show'])->name('admin.reviews.show');
     Route::patch('admin/reviews/{review}', [AdminReviewController::class, 'update'])->name('admin.reviews.update');
+    Route::get('admin/logs', [AdminLogController::class, 'index'])->name('admin.logs.index');
     Route::get('admin/encomendas', [AdminEncomendaController::class, 'index'])->name('admin.encomendas.index');
     Route::get('admin/encomendas/{encomenda}', [AdminEncomendaController::class, 'show'])->name('admin.encomendas.show');
     Route::patch('admin/encomendas/{encomenda}/pagamento', [AdminEncomendaController::class, 'atualizarPagamento'])->name('admin.encomendas.pagamento');

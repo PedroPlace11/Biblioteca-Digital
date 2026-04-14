@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use App\Models\LogSistema;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
@@ -95,9 +97,11 @@ class User extends Authenticatable
             if (empty($user->numero_leitor)) {
                 // Obtem proximo numero sequencial disponivel.
                 $sequencial = $user->numero_leitor_seq ?: static::proximoNumeroLeitorSequencial();
-                $user->numero_leitor_seq = $sequencial;
-                // Formata como 'L' + 6 digitos (ex: L000001, L000002).
-                $user->numero_leitor = sprintf('L%06d', $sequencial);
+                $user->forceFill([
+                    'numero_leitor_seq' => $sequencial,
+                    // Formata como 'L' + 6 digitos (ex: L000001, L000002).
+                    'numero_leitor' => sprintf('L%06d', $sequencial),
+                ]);
             }
 
             // Autoriza criacao de admin apenas por admin existente.
@@ -120,10 +124,13 @@ class User extends Authenticatable
             if (empty($user->numero_leitor)) {
                 // Se numero ainda estiver vazio, gera automaticamente.
                 $sequencial = $user->numero_leitor_seq ?: static::proximoNumeroLeitorSequencial();
-                $user->numero_leitor_seq = $sequencial;
-                $user->numero_leitor = sprintf('L%06d', $sequencial);
+                $user->forceFill([
+                    'numero_leitor_seq' => $sequencial,
+                    'numero_leitor' => sprintf('L%06d', $sequencial),
+                ]);
             }
         });
+
     }
 
     // Gera proximo numero sequencial disponivel para numero de leitor.

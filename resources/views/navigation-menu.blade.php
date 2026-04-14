@@ -11,6 +11,7 @@
     $isCidadaoEncomendas = request()->routeIs('cidadao.encomendas.*');
     $isAdminsManage = request()->routeIs('admins.index');
     $isAdminsCreate = request()->routeIs('admins.create');
+    $isAdminLogs = request()->routeIs('admin.logs.*');
     $isAdminEncomendas = request()->routeIs('admin.encomendas.*');
     $cartCount = 0;
     $cartSchemaReady = false;
@@ -430,6 +431,10 @@
 
                                 <x-dropdown-link href="{{ route('admin.reviews.index') }}" class="rounded-xl px-3 py-2.5 font-medium {{ request()->routeIs('admin.reviews.*') ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
                                     Gerir Reviews
+                                </x-dropdown-link>
+
+                                <x-dropdown-link href="{{ route('admin.logs.index') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isAdminLogs ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">
+                                    Logs
                                 </x-dropdown-link>
 
                                 <x-dropdown-link href="{{ route('admin.encomendas.index') }}" class="rounded-xl px-3 py-2.5 font-medium {{ $isAdminEncomendas ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900' }}">

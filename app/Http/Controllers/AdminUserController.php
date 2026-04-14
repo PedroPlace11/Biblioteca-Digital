@@ -1,10 +1,12 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\LogSistema;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class AdminUserController extends Controller
@@ -41,12 +43,31 @@ class AdminUserController extends Controller
         ]);
 
         // Cria admin com nome inicial derivado da parte local do email.
-        User::create([
+        $admin = User::create([
             'name' => Str::before($data['email'], '@'),
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role' => 'admin',
         ]);
+
+        if (Schema::hasTable('logs')) {
+            $route = request()->route();
+            $routeName = $route?->getName();
+
+            LogSistema::query()->create([
+                'ocorrido_em' => now(),
+                'user_id' => $admin->id,
+                'user_nome' => $admin->name,
+                'modulo' => 'Admins',
+                'objeto_id' => (string) $admin->id,
+                'alteracao' => 'Criacao de conta de admin',
+                'ip' => request()->ip(),
+                'browser' => (string) request()->userAgent(),
+                'metodo' => request()->method(),
+                'url' => request()->fullUrl(),
+                'route_name' => $routeName,
+            ]);
+        }
 
         // Regressa a listagem com mensagem de sucesso.
         return redirect()->route('admins.index')->with('success', 'Novo admin criado com sucesso.');
