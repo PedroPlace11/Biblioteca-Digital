@@ -1,7 +1,5 @@
 <?php
 
-
-
 use App\Models\Editora;
 use App\Models\Livro;
 use App\Models\Requisicao;
@@ -21,7 +19,14 @@ it('permite requisitar um livro quando ele esta disponivel', function () {
         'preco' => 19.90,
     ]);
 
-    $response = $this->actingAs($user)->post(route('livros.requisitar', $livro));
+    $csrfToken = 'csrf-token-disponivel';
+
+    $response = $this
+        ->actingAs($user)
+        ->withSession(['_token' => $csrfToken])
+        ->withHeader('X-CSRF-TOKEN', $csrfToken)
+        ->from(route('livros.show', $livro))
+        ->post(route('livros.requisitar', $livro));
 
     $response->assertRedirect(route('livros.show', $livro));
     $response->assertSessionHas('popup_success', 'Livro requisitado com sucesso.');
@@ -51,7 +56,14 @@ it('impede requisitar um livro quando ele ja esta requisitado por outro utilizad
         'livro_id' => $livro->id,
     ]);
 
-    $response = $this->actingAs($userAtual)->post(route('livros.requisitar', $livro));
+    $csrfToken = 'csrf-token-indisponivel';
+
+    $response = $this
+        ->actingAs($userAtual)
+        ->withSession(['_token' => $csrfToken])
+        ->withHeader('X-CSRF-TOKEN', $csrfToken)
+        ->from(route('livros.show', $livro))
+        ->post(route('livros.requisitar', $livro));
 
     $response->assertRedirect(route('livros.show', $livro));
     $response->assertSessionHas('info', 'Livro indisponível no momento.');
@@ -82,7 +94,14 @@ it('nao cria uma segunda requisicao quando o mesmo utilizador tenta requisitar o
         'livro_id' => $livro->id,
     ]);
 
-    $response = $this->actingAs($user)->post(route('livros.requisitar', $livro));
+    $csrfToken = 'csrf-token-duplicado';
+
+    $response = $this
+        ->actingAs($user)
+        ->withSession(['_token' => $csrfToken])
+        ->withHeader('X-CSRF-TOKEN', $csrfToken)
+        ->from(route('livros.show', $livro))
+        ->post(route('livros.requisitar', $livro));
 
     $response->assertRedirect(route('livros.index'));
     $response->assertSessionHas('info', 'Já requisitou este livro.');
@@ -111,7 +130,14 @@ it('cria requisicao de livro com dados corretos do utilizador e do livro', funct
         'preco' => 15.50,
     ]);
 
-    $response = $this->actingAs($user)->post(route('livros.requisitar', $livro));
+    $csrfToken = 'csrf-token-criacao';
+
+    $response = $this
+        ->actingAs($user)
+        ->withSession(['_token' => $csrfToken])
+        ->withHeader('X-CSRF-TOKEN', $csrfToken)
+        ->from(route('livros.show', $livro))
+        ->post(route('livros.requisitar', $livro));
 
     $response->assertRedirect(route('livros.show', $livro));
     $response->assertSessionHas('popup_success', 'Livro requisitado com sucesso.');
@@ -138,7 +164,14 @@ it('nao permite criar requisicao sem livro valido', function () {
         'role' => 'cidadao',
     ]);
 
-    $response = $this->actingAs($user)->post(route('livros.requisitar', 999999));
+    $csrfToken = 'csrf-token-invalido';
+
+    $response = $this
+        ->actingAs($user)
+        ->withSession(['_token' => $csrfToken])
+        ->withHeader('X-CSRF-TOKEN', $csrfToken)
+        ->from(route('livros.index'))
+        ->post(route('livros.requisitar', 999999));
 
     // O route model binding do Laravel bloqueia IDs de livro inexistentes com 404.
     $response->assertNotFound();
@@ -193,5 +226,116 @@ it('permite solicitar devolucao de livro e atualiza a requisicao ativa', functio
         ->and($requisicao->deleted_at)->toBeNull();
 
     Carbon::setTestNow();
+});
+
+it('lista apenas as requisicoes do utilizador autenticado', function () {
+    $utilizadorAlvo = User::factory()->create([
+        'role' => 'cidadao',
+    ]);
+    $outroUtilizador = User::factory()->create([
+        'role' => 'cidadao',
+    ]);
+
+    $editora = Editora::create([
+        'nome' => 'Editora Listagem',
+    ]);
+
+    $livroDoAlvo1 = Livro::create([
+        'isbn' => 'isbn-listagem-alvo-001',
+        'nome' => 'Livro Alvo 1',
+        'editora_id' => $editora->id,
+        'bibliografia' => 'Livro do utilizador alvo',
+        'preco' => 12.50,
+    ]);
+
+    $livroDoAlvo2 = Livro::create([
+        'isbn' => 'isbn-listagem-alvo-002',
+        'nome' => 'Livro Alvo 2',
+        'editora_id' => $editora->id,
+        'bibliografia' => 'Segundo livro do utilizador alvo',
+        'preco' => 14.00,
+    ]);
+
+    $livroDeOutro = Livro::create([
+        'isbn' => 'isbn-listagem-outro-001',
+        'nome' => 'Livro Outro Utilizador',
+        'editora_id' => $editora->id,
+        'bibliografia' => 'Livro de outro utilizador',
+        'preco' => 18.00,
+    ]);
+
+    $requisicaoDoAlvo1 = Requisicao::create([
+        'user_id' => $utilizadorAlvo->id,
+        'livro_id' => $livroDoAlvo1->id,
+        'cidadao_nome' => $utilizadorAlvo->name,
+        'cidadao_email' => $utilizadorAlvo->email,
+        'cidadao_numero_leitor' => $utilizadorAlvo->numero_leitor,
+    ]);
+
+    $requisicaoDoAlvo2 = Requisicao::create([
+        'user_id' => $utilizadorAlvo->id,
+        'livro_id' => $livroDoAlvo2->id,
+        'cidadao_nome' => $utilizadorAlvo->name,
+        'cidadao_email' => $utilizadorAlvo->email,
+        'cidadao_numero_leitor' => $utilizadorAlvo->numero_leitor,
+    ]);
+
+    $requisicaoDeOutro = Requisicao::create([
+        'user_id' => $outroUtilizador->id,
+        'livro_id' => $livroDeOutro->id,
+        'cidadao_nome' => $outroUtilizador->name,
+        'cidadao_email' => $outroUtilizador->email,
+        'cidadao_numero_leitor' => $outroUtilizador->numero_leitor,
+    ]);
+
+    $response = $this->actingAs($utilizadorAlvo)->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertViewHas('minhasRequisicoes', function ($minhasRequisicoes) use ($utilizadorAlvo, $requisicaoDoAlvo1, $requisicaoDoAlvo2, $requisicaoDeOutro) {
+        $ids = $minhasRequisicoes->pluck('id');
+        $userIds = $minhasRequisicoes->pluck('user_id')->unique();
+
+        return $ids->contains($requisicaoDoAlvo1->id)
+            && $ids->contains($requisicaoDoAlvo2->id)
+            && !$ids->contains($requisicaoDeOutro->id)
+            && $userIds->count() === 1
+            && $userIds->first() === $utilizadorAlvo->id;
+    });
+});
+
+it('impede requisitar um livro quando o stock e zero', function () {
+    $user = User::factory()->create([
+        'role' => 'cidadao',
+    ]);
+
+    $editora = Editora::create([
+        'nome' => 'Editora Sem Stock',
+    ]);
+
+    $livro = Livro::create([
+        'isbn' => 'isbn-stock-zero-001',
+        'nome' => 'Livro Sem Stock',
+        'editora_id' => $editora->id,
+        'bibliografia' => 'Teste de stock zero',
+        'preco' => 19.99,
+        'stock' => 0,
+    ]);
+
+    $csrfToken = 'csrf-token-stock-zero';
+
+    $response = $this
+        ->actingAs($user)
+        ->withSession(['_token' => $csrfToken])
+        ->withHeader('X-CSRF-TOKEN', $csrfToken)
+        ->from(route('livros.show', $livro))
+        ->post(route('livros.requisitar', $livro));
+
+    $response->assertRedirect(route('livros.show', $livro));
+    $response->assertSessionHas('info', 'Livro sem stock disponível no momento.');
+
+    $this->assertDatabaseMissing('requisicoes', [
+        'user_id' => $user->id,
+        'livro_id' => $livro->id,
+    ]);
 });
 

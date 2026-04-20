@@ -36,6 +36,14 @@ test('users cannot authenticate with invalid password', function () {
     $this->assertGuest();
 });
 
+test('users can logout using post request', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post('/logout');
+
+    $this->assertGuest();
+});
+
 test('new citizen registrations are written to logs', function () {
     $response = $this->post('/register', [
         'name' => 'Cidadao Novo',

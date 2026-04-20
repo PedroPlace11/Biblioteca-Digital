@@ -15,7 +15,7 @@
                 <div>
                     <label class="label"><span class="label-text">Módulo</span></label>
                     <select name="modulo" class="select select-bordered w-full">
-                        <option value="">Todos</option>
+                        <option value="" {{ $modulo === '' ? 'selected' : '' }}>Todos</option>
                         @foreach ($modulos as $opcaoModulo)
                             <option value="{{ $opcaoModulo }}" {{ $modulo === $opcaoModulo ? 'selected' : '' }}>{{ $opcaoModulo }}</option>
                         @endforeach

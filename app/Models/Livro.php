@@ -14,7 +14,13 @@ class Livro extends Model
         'editora_id',
         'bibliografia',
         'imagem_capa',
-        'preco'
+        'preco',
+        'stock'
+    ];
+
+    // Garante que o stock seja tratado como inteiro nas leituras e escritas.
+    protected $casts = [
+        'stock' => 'integer',
     ];
 
     // Define o campo tipo de chave para model binding em rotas (slug ao invés de id).

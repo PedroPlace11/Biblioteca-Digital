@@ -50,6 +50,8 @@ class LogController extends Controller
 
         $modulos = LogSistema::query()
             ->select('modulo')
+            ->whereNotNull('modulo')
+            ->where('modulo', '!=', '')
             ->distinct()
             ->orderBy('modulo')
             ->pluck('modulo');

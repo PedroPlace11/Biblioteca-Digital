@@ -122,6 +122,10 @@ class LivroController extends Controller
             abort(403);
         }
 
+        if ((int) ($livro->stock ?? 0) <= 0) {
+            return redirect()->route('livros.show', $livro)->with('info', 'Livro sem stock disponível no momento.');
+        }
+
         // Executa validacoes dentro de transacao para evitar inconsistencias.
         $resultado = DB::transaction(function () use ($livro, $user) {
             $userId = $user->id;

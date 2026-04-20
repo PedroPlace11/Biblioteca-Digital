@@ -455,9 +455,9 @@
                             <form method="POST" action="{{ route('logout') }}" x-data>
                                 @csrf
 
-                                <x-dropdown-link href="{{ route('logout') }}" class="rounded-xl px-3 py-2.5 font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700" @click.prevent="$root.submit();">
+                                <button type="submit" class="block w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50 hover:text-rose-700">
                                     Terminar Sessão
-                                </x-dropdown-link>
+                                </button>
                             </form>
                         </x-slot>
                     </x-dropdown>
