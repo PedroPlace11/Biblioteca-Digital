@@ -211,6 +211,87 @@ class User extends Authenticatable
         // Um utilizador pode guardar multiplas moradas (casa, trabalho, etc).
         return $this->hasMany(Morada::class);
     }
+
+    // ==================== RELACIONAMENTOS DE CHAT ====================
+
+    // Relação 1:N - Salas criadas pelo utilizador
+    public function createdRooms()
+    {
+        // Um utilizador (admin) pode criar multiplas salas.
+        return $this->hasMany(Room::class, 'creator_id');
+    }
+
+    // Relação N:N - Salas às quais o utilizador pertence
+    public function rooms()
+    {
+        // Um utilizador pode participar em multiplas salas.
+        return $this->belongsToMany(Room::class, 'room_users')
+            ->withPivot('joined_at', 'role')
+            ->withTimestamps();
+    }
+
+    // Relação 1:N - Mensagens enviadas pelo utilizador em salas
+    public function messages()
+    {
+        // Um utilizador pode enviar multiplas mensagens.
+        return $this->hasMany(Message::class);
+    }
+
+    // Relação 1:N - Mensagens diretas enviadas
+    public function sentDirectMessages()
+    {
+        // Um utilizador pode enviar multiplas mensagens diretas.
+        return $this->hasMany(DirectMessage::class, 'sender_id');
+    }
+
+    // Relação 1:N - Mensagens diretas recebidas
+    public function receivedDirectMessages()
+    {
+        // Um utilizador pode receber multiplas mensagens diretas.
+        return $this->hasMany(DirectMessage::class, 'recipient_id');
+    }
+
+    // Relação 1:N - Convites para salas recebidos
+    public function roomInvitationsReceived()
+    {
+        // Um utilizador pode receber multiplos convites de salas.
+        return $this->hasMany(RoomInvitation::class, 'invited_user_id');
+    }
+
+    // Relação 1:N - Convites para salas enviados
+    public function roomInvitationsSent()
+    {
+        // Um utilizador (admin) pode enviar multiplos convites.
+        return $this->hasMany(RoomInvitation::class, 'invited_by_id');
+    }
+
+    // Relação 1:N - Pedidos de entrada em sala feitos pelo utilizador
+    public function roomJoinRequests()
+    {
+        // Um utilizador pode pedir entrada em multiplas salas.
+        return $this->hasMany(RoomJoinRequest::class, 'user_id');
+    }
+
+    /**
+     * Verifica se o utilizador é admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Obtém todas as conversas diretas (com ambos os lados)
+     */
+    public function directMessageConversations()
+    {
+        // Retorna usuarios com quem tem conversas diretas
+        $sent = $this->sentDirectMessages()->distinct()->pluck('recipient_id');
+        $received = $this->receivedDirectMessages()->distinct()->pluck('sender_id');
+        $allUserIds = $sent->merge($received)->unique();
+
+        return User::whereIn('id', $allUserIds)->get();
+    }
 }
 
 
