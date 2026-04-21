@@ -13,6 +13,10 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RequisicaoController;
 use App\Http\Controllers\Cidadao\MoradaController as CidadaoMoradaController;
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\DirectMessageController;
+use App\Http\Controllers\RoomInvitationController;
 use App\Models\Livro;
 use App\Models\Autor;
 use App\Models\Editora;
@@ -274,6 +278,45 @@ Route::prefix('conta')->middleware(['auth', 'verified'])->group(function () {
     Route::get('encomendas', [CidadaoEncomendaController::class, 'index'])->name('cidadao.encomendas.index');
     Route::get('encomendas/{encomenda}', [CidadaoEncomendaController::class, 'show'])->name('cidadao.encomendas.show');
     Route::get('encomendas/{encomenda}/fatura/pdf', [CidadaoEncomendaController::class, 'exportarFaturaPdf'])->name('cidadao.encomendas.fatura.pdf');
+});
+
+// ==================== ROTAS DE CHAT ====================
+Route::middleware(['auth', 'verified'])->prefix('chat')->name('chat.')->group(function () {
+    // ---- SALAS DE CHAT ----
+    Route::resource('rooms', RoomController::class);
+    Route::get('/rooms/{room}/details', [RoomController::class, 'details'])->name('rooms.details');
+    Route::post('/rooms/{room}/members', [RoomController::class, 'addMember'])->name('rooms.add-member');
+    Route::delete('/rooms/{room}/members/{user}', [RoomController::class, 'removeMember'])->name('rooms.remove-member');
+    Route::patch('/rooms/{room}/members/{user}/role', [RoomController::class, 'updateMemberRole'])->name('rooms.update-member-role');
+    Route::post('/rooms/{room}/archive', [RoomController::class, 'archive'])->name('rooms.archive');
+    Route::get('/rooms/{room}/available-users', [RoomController::class, 'availableUsers'])->name('rooms.available-users');
+    Route::post('/rooms/{room}/join-request', [RoomController::class, 'requestJoin'])->name('rooms.join-request');
+    Route::post('/rooms/{room}/join-request/{joinRequest}/approve', [RoomController::class, 'approveJoinRequest'])->name('rooms.join-request.approve');
+    Route::post('/rooms/{room}/join-request/{joinRequest}/decline', [RoomController::class, 'declineJoinRequest'])->name('rooms.join-request.decline');
+
+    // ---- MENSAGENS DE SALAS ----
+    Route::post('/rooms/{room}/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::get('/rooms/{room}/messages', [MessageController::class, 'getMessages'])->name('messages.get');
+    Route::get('/rooms/{room}/messages/new', [MessageController::class, 'getNewMessages'])->name('messages.new');
+    Route::patch('/rooms/{room}/messages/{message}', [MessageController::class, 'update'])->name('messages.update');
+    Route::delete('/rooms/{room}/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
+
+    // ---- MENSAGENS DIRETAS ----
+    Route::get('/direct-messages', [DirectMessageController::class, 'index'])->name('direct-messages.index');
+    Route::get('/direct-messages/{user}', [DirectMessageController::class, 'show'])->name('direct-messages.show');
+    Route::post('/direct-messages/{user}', [DirectMessageController::class, 'store'])->name('direct-messages.store');
+    Route::get('/direct-messages/{user}/new', [DirectMessageController::class, 'getNewMessages'])->name('direct-messages.new');
+    Route::patch('/direct-messages/{user}/{message}', [DirectMessageController::class, 'update'])->name('direct-messages.update');
+    Route::delete('/direct-messages/{user}/{message}', [DirectMessageController::class, 'destroy'])->name('direct-messages.destroy');
+    Route::post('/direct-messages/{user}/mark-as-read', [DirectMessageController::class, 'markAsRead'])->name('direct-messages.mark-as-read');
+    Route::get('/direct-messages/unread/count', [DirectMessageController::class, 'getUnreadCount'])->name('direct-messages.unread-count');
+
+    // ---- CONVITES PARA SALAS ----
+    Route::get('/invitations', [RoomInvitationController::class, 'index'])->name('invitations.index');
+    Route::post('/rooms/{room}/invitations', [RoomInvitationController::class, 'store'])->name('invitations.store');
+    Route::post('/invitations/{invitation}/accept', [RoomInvitationController::class, 'accept'])->name('invitations.accept');
+    Route::post('/invitations/{invitation}/decline', [RoomInvitationController::class, 'decline'])->name('invitations.decline');
+    Route::delete('/rooms/{room}/invitations/{invitation}', [RoomInvitationController::class, 'destroy'])->name('invitations.destroy');
 });
 
 // Rotas públicas de catálogo.

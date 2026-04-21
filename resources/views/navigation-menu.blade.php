@@ -7,6 +7,7 @@
     $isAutores = request()->routeIs('autores.*');
     $isEditoras = request()->routeIs('editoras.*');
     $isProfile = request()->routeIs('profile.show');
+    $isChat = request()->routeIs('chat.*');
     $isCidadaoMoradas = request()->routeIs('cidadao.moradas.*');
     $isCidadaoEncomendas = request()->routeIs('cidadao.encomendas.*');
     $isAdminsManage = request()->routeIs('admins.index');
@@ -253,10 +254,13 @@
                                                         $isCarrinhoNotif = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'carrinho');
                                                         $isEncomendaNotif = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'encomenda');
                                                         $isPagamentoNotif = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'pagamento');
+                                                        $isPedidoSala = isset($notification->data['title']) && (str_contains(Str::lower($notification->data['title']), 'pedido') || str_contains(Str::lower($notification->data['title']), 'entrar na sala'));
                                                         $encomendaUrl = $notification->data['encomenda_url'] ?? null;
                                                         $reviewUrl = $notification->data['review_url'] ?? null;
                                                         $livroUrl = $notification->data['livro_url'] ?? null;
                                                         $carrinhoUrl = $notification->data['carrinho_url'] ?? null;
+                                                        $joinRequestId = $notification->data['join_request_id'] ?? null;
+                                                        $roomId = $notification->data['room_id'] ?? null;
                                                         $destinoNotificacao = match (true) {
                                                             $isReview && Auth::user()->role === 'admin' && !empty($reviewUrl) => $reviewUrl,
                                                             $isReview && Auth::user()->role === 'cidadao' && !empty($reviewUrl) => $reviewUrl,
@@ -264,14 +268,31 @@
                                                             $isRecepcao && !empty($livroUrl) => $livroUrl,
                                                             $isLivroDisponivel && !empty($livroUrl) => $livroUrl,
                                                             $isCarrinhoNotif => route('carrinho.index'),
+                                                            $isPedidoSala => route('chat.rooms.index'),
                                                             ($isEncomendaNotif || $isPagamentoNotif) && !empty($encomendaUrl) => $encomendaUrl,
                                                             ($isConfirmacao || $isDevolucao) && !empty($livroUrl) => $livroUrl,
                                                             default => url()->current(),
                                                         };
                                                     @endphp
                                                     <input type="hidden" name="redirect_to" value="{{ $destinoNotificacao }}">
-                                                    <button type="submit" class="text-xs font-semibold text-sky-700 hover:text-sky-800">Ver detalhes</button>
+                                                    @if($isPedidoSala && $roomId && $joinRequestId)
+                                                        <a href="{{ route('chat.rooms.index') }}" class="text-xs font-semibold text-sky-700 hover:text-sky-800">Ver detalhes</a>
+                                                    @else
+                                                        <button type="submit" class="text-xs font-semibold text-sky-700 hover:text-sky-800">Ver detalhes</button>
+                                                    @endif
                                                 </form>
+                                                @if($isPedidoSala && $roomId && $joinRequestId)
+                                                    <div class="flex items-center gap-2">
+                                                        <form method="POST" action="{{ route('chat.rooms.join-request.approve', ['room' => $roomId, 'joinRequest' => $joinRequestId]) }}">
+                                                            @csrf
+                                                            <button type="submit" class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800">Aceitar</button>
+                                                        </form>
+                                                        <form method="POST" action="{{ route('chat.rooms.join-request.decline', ['room' => $roomId, 'joinRequest' => $joinRequestId]) }}">
+                                                            @csrf
+                                                            <button type="submit" class="text-[11px] font-semibold text-rose-700 hover:text-rose-800">Recusar</button>
+                                                        </form>
+                                                    </div>
+                                                @endif
                                                 <div class="flex items-center gap-2">
                                                     <span class="text-[11px] text-slate-400">{{ $notification->created_at?->diffForHumans() }}</span>
                                                     @if (is_null($notification->read_at))
@@ -292,13 +313,24 @@
                                                 </svg>
                                             </div>
                                             <p class="text-sm font-medium text-slate-700 w-full">Sem notificações</p>
-                                            <p class="text-xs text-slate-500 mt-1 w-full leading-5">As novas confirmações de requisições aparecerão aqui.</p>
+                                            <p class="text-xs text-slate-500 mt-1 w-full leading-5">As novas confirmações, pedidos de entrada e outras atualizações aparecerão aqui.</p>
                                         </div>
                                     @endforelse
                                 </div>
                             </div>
                         </x-slot>
                     </x-dropdown>
+                </div>
+
+                {{-- Ícone de Chat --}}
+                <div class="ms-3 relative">
+                    <a href="{{ route('chat.rooms.index') }}"
+                        class="inline-flex items-center justify-center size-9 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
+                        aria-label="Chat">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                    </a>
                 </div>
 
                 @if (Auth::user()->role === 'cidadao' && $cartSchemaReady)
@@ -511,13 +543,23 @@
                         @endif
                     </a>
                 @else
-                    <a href="{{ route('autores.index') }}"
-                        class="flex flex-col items-center justify-center gap-1 transition {{ $isAutores ? 'text-sky-600' : 'text-slate-500' }}"
-                        aria-label="Autores">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.5a6.75 6.75 0 1 0-6 0M3.75 20.25a8.25 8.25 0 0 1 16.5 0" />
-                        </svg>
-                    </a>
+                    @auth
+                        <a href="{{ route('chat.rooms.index') }}"
+                            class="flex flex-col items-center justify-center gap-1 transition {{ $isChat ? 'text-sky-600' : 'text-slate-500' }}"
+                            aria-label="Chat">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                            </svg>
+                        </a>
+                    @else
+                        <a href="{{ route('autores.index') }}"
+                            class="flex flex-col items-center justify-center gap-1 transition {{ $isAutores ? 'text-sky-600' : 'text-slate-500' }}"
+                            aria-label="Autores">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="size-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.5a6.75 6.75 0 1 0-6 0M3.75 20.25a8.25 8.25 0 0 1 16.5 0" />
+                            </svg>
+                        </a>
+                    @endauth
                 @endif
 
                 {{-- Botão central para livros (mobile), com destaque visual --}}

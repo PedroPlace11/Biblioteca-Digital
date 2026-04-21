@@ -74,7 +74,7 @@
             <main class="pb-24 sm:pb-0 flex-1">
                 {{-- Compatibiliza views que usam section('content') e componentes com slot. --}}
                 @yield('content')
-                {{ $slot }}
+                {{ $slot ?? '' }}
             </main>
 
             {{-- Rodapé comum a todas as páginas autenticadas. --}}
