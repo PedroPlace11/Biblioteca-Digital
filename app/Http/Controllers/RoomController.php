@@ -58,13 +58,8 @@ class RoomController extends Controller
                 ->get();
         }
 
-        $memberRoomIds = $user->rooms()->pluck('rooms.id');
-
         $conversations = User::query()
             ->where('id', '!=', $user->id)
-            ->whereHas('rooms', function ($query) use ($memberRoomIds) {
-                $query->whereIn('rooms.id', $memberRoomIds);
-            })
             ->where(function ($query) use ($user) {
                 $query->whereHas('sentDirectMessages', function ($q) use ($user) {
                     $q->where('recipient_id', $user->id);
@@ -81,10 +76,6 @@ class RoomController extends Controller
                 },
             ])
             ->get();
-
-        if ($user->role === 'cidadao') {
-            $conversations = $conversations->where('role', 'cidadao')->values();
-        }
 
         $conversations = $conversations
             ->sortByDesc(function ($conversationUser) {
@@ -116,13 +107,7 @@ class RoomController extends Controller
                 },
             ])->find($selectedRecipientId);
 
-            $isMemberOfSameRoom = $candidateRecipient
-                ? $user->rooms()->whereHas('users', function ($query) use ($candidateRecipient) {
-                    $query->where('users.id', $candidateRecipient->id);
-                })->exists()
-                : false;
-
-            if ($candidateRecipient && $candidateRecipient->id !== $user->id && $isMemberOfSameRoom) {
+            if ($candidateRecipient && $candidateRecipient->id !== $user->id) {
                 $selectedRecipient = $candidateRecipient;
 
                 if (! $conversations->contains('id', $selectedRecipient->id)) {
@@ -259,7 +244,10 @@ class RoomController extends Controller
         // Adiciona o criador como admin da sala
         $room->addMember(Auth::id(), 'admin');
 
-        return redirect()->route('chat.rooms.show', $room)
+        return redirect()->route('chat.rooms.index', [
+            'tab' => 'rooms',
+            'room' => $room->id,
+        ])
             ->with('success', 'Sala criada com sucesso!');
     }
 
@@ -297,7 +285,10 @@ class RoomController extends Controller
 
         $room->update($validated);
 
-        return redirect()->route('chat.rooms.show', $room)
+        return redirect()->route('chat.rooms.index', [
+            'tab' => 'rooms',
+            'room' => $room->id,
+        ])
             ->with('success', 'Sala atualizada com sucesso!');
     }
 
@@ -432,6 +423,28 @@ class RoomController extends Controller
             ->with('success', $validated['role'] === 'admin'
                 ? 'Membro promovido a admin da sala.'
                 : 'Admin da sala alterado para membro.');
+    }
+
+    /**
+     * Atualiza preferência de notificações do membro atual para uma sala.
+     */
+    public function updateNotificationPreference(Request $request, Room $room)
+    {
+        $user = Auth::user();
+
+        if (! $room->hasMember($user->id)) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'notification_mode' => 'required|in:all,mentions,none',
+        ]);
+
+        $room->users()->updateExistingPivot($user->id, [
+            'notification_mode' => $validated['notification_mode'],
+        ]);
+
+        return back();
     }
 
     /**

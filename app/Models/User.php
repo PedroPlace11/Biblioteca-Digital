@@ -41,6 +41,9 @@ class User extends Authenticatable
         'role',
         'numero_leitor',
         'numero_leitor_seq',
+        'is_online',
+        'last_seen_at',
+        'chat_room_notifications_mode',
     ];
 
     /**
@@ -79,6 +82,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             // Password e automaticamente hashada por Fortify.
             'password' => 'hashed',
+            // Status de conexão online/offline.
+            'is_online' => 'boolean',
+            // Última vez que o utilizador foi visto online.
+            'last_seen_at' => 'datetime',
         ];
     }
 
@@ -226,7 +233,7 @@ class User extends Authenticatable
     {
         // Um utilizador pode participar em multiplas salas.
         return $this->belongsToMany(Room::class, 'room_users')
-            ->withPivot('joined_at', 'role')
+            ->withPivot('joined_at', 'role', 'notification_mode')
             ->withTimestamps();
     }
 

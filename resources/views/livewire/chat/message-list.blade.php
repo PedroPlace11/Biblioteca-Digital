@@ -1,4 +1,7 @@
-<div class="h-full overflow-y-auto px-4 md:px-8 py-4" wire:poll.2s="loadMessages">
+<div id="room-messages-scroll"
+    x-init="setTimeout(() => { $el.scrollTop = $el.scrollHeight }, 150)"
+    class="h-full overflow-y-auto px-4 md:px-8 py-4"
+    wire:poll.2s="loadMessages">
     <div class="max-w-3xl mx-auto">
     @forelse($messages as $message)
         @php
@@ -112,7 +115,7 @@
     // Auto-scroll para última mensagem
     Livewire.on('messages-loaded', () => {
         setTimeout(() => {
-            const container = document.querySelector('[wire\\:poll]');
+            const container = document.getElementById('room-messages-scroll');
             if (container) {
                 container.scrollTop = container.scrollHeight;
             }

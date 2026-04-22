@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\Message;
+use App\Services\RoomMessageNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class MessageController extends Controller
 {
@@ -62,6 +64,8 @@ class MessageController extends Controller
         }
 
         $message = $room->messages()->create($messageData);
+
+        app(RoomMessageNotificationService::class)->notifyRoomMembers($message);
 
         return response()->json([
             'message' => $message->load('user'),
@@ -136,7 +140,7 @@ class MessageController extends Controller
 
         // Se houver arquivo, remove do storage
         if ($message->file_path) {
-            \Storage::disk('public')->delete($message->file_path);
+            Storage::disk('public')->delete($message->file_path);
         }
 
         $message->delete();

@@ -259,6 +259,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/livros/{livro}/alerta-disponibilidade', [LivroController::class, 'ativarAlertaDisponibilidade'])->name('livros.alerta-disponibilidade');
     Route::post('/notificacoes/{notification}/lida', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notificacoes/ler-todas', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/notificacoes/preferencias/salas-chat', [NotificationController::class, 'updateChatRoomPreference'])->name('notifications.chat-room-preference');
 
     // Review do cidadão após devolução
     Route::get('/livros/{livro}/review', [ReviewController::class, 'create'])->name('reviews.create');
@@ -293,6 +294,7 @@ Route::middleware(['auth', 'verified'])->prefix('chat')->name('chat.')->group(fu
     Route::post('/rooms/{room}/join-request', [RoomController::class, 'requestJoin'])->name('rooms.join-request');
     Route::post('/rooms/{room}/join-request/{joinRequest}/approve', [RoomController::class, 'approveJoinRequest'])->name('rooms.join-request.approve');
     Route::post('/rooms/{room}/join-request/{joinRequest}/decline', [RoomController::class, 'declineJoinRequest'])->name('rooms.join-request.decline');
+    Route::post('/rooms/{room}/notification-preference', [RoomController::class, 'updateNotificationPreference'])->name('rooms.notification-preference');
 
     // ---- MENSAGENS DE SALAS ----
     Route::post('/rooms/{room}/messages', [MessageController::class, 'store'])->name('messages.store');

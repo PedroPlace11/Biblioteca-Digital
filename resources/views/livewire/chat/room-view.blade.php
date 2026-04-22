@@ -39,13 +39,17 @@
                     @foreach($room->users as $member)
                         <div class="px-3 py-2 hover:bg-gray-50 flex items-center justify-between">
                             <div class="flex items-center space-x-2 flex-1">
-                                @if($member->profile_photo_path)
-                                    <img src="{{ asset('storage/' . $member->profile_photo_path) }}" alt="{{ $member->name }}" class="h-8 w-8 rounded-full object-cover">
-                                @else
-                                    <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-700">
-                                        {{ substr($member->name, 0, 1) }}
-                                    </div>
-                                @endif
+                                <div class="relative">
+                                    @if($member->profile_photo_path)
+                                        <img src="{{ asset('storage/' . $member->profile_photo_path) }}" alt="{{ $member->name }}" class="h-8 w-8 rounded-full object-cover">
+                                    @else
+                                        <div class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-700">
+                                            {{ substr($member->name, 0, 1) }}
+                                        </div>
+                                    @endif
+                                    <!-- Status Online/Offline Icon -->
+                                    <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white {{ $member->is_online ? 'bg-green-500' : 'bg-gray-400' }}" title="{{ $member->is_online ? 'Online' : 'Offline' }}"></div>
+                                </div>
                                 @if($member->id !== auth()->id() && !(auth()->user()->role === 'cidadao' && $member->role === 'admin'))
                                     <a href="{{ route('chat.direct-messages.show', $member) }}" class="text-sm text-gray-900 hover:text-blue-600 hover:underline">{{ $member->name }}</a>
                                 @else

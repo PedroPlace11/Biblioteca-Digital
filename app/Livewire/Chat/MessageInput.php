@@ -4,6 +4,7 @@ namespace App\Livewire\Chat;
 
 use App\Models\Room;
 use App\Models\Message;
+use App\Services\RoomMessageNotificationService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,6 @@ class MessageInput extends Component
 
         // Validação
         if (!$this->content && !$this->file) {
-            $this->addError('content', 'Envie uma mensagem ou um arquivo');
             return;
         }
 
@@ -64,6 +64,8 @@ class MessageInput extends Component
             }
 
             $message = $this->room->messages()->create($messageData);
+
+            app(RoomMessageNotificationService::class)->notifyRoomMembers($message);
 
             // Reset
             $this->content = '';
