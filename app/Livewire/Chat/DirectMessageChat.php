@@ -4,6 +4,7 @@ namespace App\Livewire\Chat;
 
 use App\Models\User;
 use App\Models\DirectMessage;
+use App\Notifications\DirectMessageNotification;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
@@ -49,12 +50,13 @@ class DirectMessageChat extends Component
             ->limit(100)
             ->get()
             ->values();
+
+            $this->dispatch('direct-messages-loaded');
     }
 
     public function sendMessage()
     {
         if (!$this->content && !$this->file) {
-            $this->addError('content', 'Envie uma mensagem ou um arquivo');
             return;
         }
 
@@ -89,6 +91,9 @@ class DirectMessageChat extends Component
             }
 
             DirectMessage::create($messageData);
+
+            // Dispara notificação para o destinatário
+            $this->recipient->notify(new DirectMessageNotification(DirectMessage::latest('id')->first()));
 
             $this->content = '';
             $this->file = null;

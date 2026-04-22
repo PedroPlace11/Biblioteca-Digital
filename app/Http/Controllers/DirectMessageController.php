@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DirectMessage;
 use App\Models\User;
+use App\Notifications\DirectMessageNotification;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,10 +33,6 @@ class DirectMessageController extends Controller
             ])
             ->get();
 
-        if ($user->role === 'cidadao') {
-            $conversations = $conversations->where('role', 'cidadao')->values();
-        }
-
         return $conversations
             ->sortByDesc(function ($conversationUser) {
                 $lastMessage = $conversationUser->sentDirectMessages
@@ -46,11 +43,6 @@ class DirectMessageController extends Controller
                 return $lastMessage?->created_at?->timestamp ?? 0;
             })
             ->values();
-    }
-
-    private function cidadaoCannotMessageAdmin(User $currentUser, User $targetUser): bool
-    {
-        return $currentUser->role === 'cidadao' && $targetUser->role === 'admin';
     }
 
     /**
@@ -76,14 +68,9 @@ class DirectMessageController extends Controller
             return redirect()->route('chat.direct-messages.index');
         }
 
-        if ($this->cidadaoCannotMessageAdmin($currentUser, $user)) {
-            return redirect()->route('chat.direct-messages.index')
-                ->with('error', 'Cidadão só pode enviar mensagem para cidadão.');
-        }
-
         $conversations = $this->getConversationsFor($currentUser);
 
-        if (! $conversations->contains('id', $user->id) && ! $this->cidadaoCannotMessageAdmin($currentUser, $user)) {
+        if (! $conversations->contains('id', $user->id)) {
             $user->load(['sentDirectMessages' => function($query) use ($currentUser) {
                 $query->where('recipient_id', $currentUser->id)->latest();
             }, 'receivedDirectMessages' => function($query) use ($currentUser) {
@@ -111,12 +98,6 @@ class DirectMessageController extends Controller
     public function store(Request $request, User $user)
     {
         $currentUser = Auth::user();
-
-        if ($this->cidadaoCannotMessageAdmin($currentUser, $user)) {
-            return response()->json([
-                'message' => 'Cidadão só pode enviar mensagem para cidadão',
-            ], 403);
-        }
 
         if ($user->id === $currentUser->id) {
             return response()->json([
@@ -170,9 +151,13 @@ class DirectMessageController extends Controller
         }
 
         $message = DirectMessage::create($messageData);
+        $message->load('sender', 'recipient');
+
+        // Gera notificação no sininho para o destinatário da mensagem privada.
+        $user->notify(new DirectMessageNotification($message));
 
         return response()->json([
-            'message' => $message->load('sender', 'recipient'),
+            'message' => $message,
             'success' => true,
         ]);
     }
@@ -183,10 +168,6 @@ class DirectMessageController extends Controller
     public function getNewMessages(Request $request, User $user)
     {
         $currentUser = Auth::user();
-
-        if ($this->cidadaoCannotMessageAdmin($currentUser, $user)) {
-            return response()->json([], 403);
-        }
 
         $since = $request->query('since');
 
@@ -255,10 +236,6 @@ class DirectMessageController extends Controller
     public function markAsRead(User $user)
     {
         $currentUser = Auth::user();
-
-        if ($this->cidadaoCannotMessageAdmin($currentUser, $user)) {
-            return response()->json(['success' => false], 403);
-        }
 
         DirectMessage::where('sender_id', $user->id)
             ->where('recipient_id', $currentUser->id)

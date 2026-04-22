@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
 
+        // Sincroniza o status online dos utilizadores autenticados
+        $middleware->web(prepend: [
+            \App\Http\Middleware\SyncOnlineStatus::class,
+        ]);
+
         // Regista auditoria de acoes para pedidos web autenticados.
         $middleware->web(append: [
             \App\Http\Middleware\RegistarAcaoMiddleware::class,

@@ -28,15 +28,19 @@
                        class="block px-4 py-3 rounded-lg hover:bg-gray-50 transition group {{ request()->route('user') && request()->route('user')->id === $user->id ? 'bg-blue-50 border-l-4 border-blue-600' : '' }}">
                         <div class="flex items-start justify-between">
                             <div class="flex-1 flex items-center space-x-3">
-                                @if($user->profile_photo_path)
-                                    <img src="{{ asset('storage/' . $user->profile_photo_path) }}"
-                                         alt="{{ $user->name }}"
-                                         class="h-10 w-10 rounded-full object-cover">
-                                @else
-                                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
-                                        {{ substr($user->name, 0, 1) }}
-                                    </div>
-                                @endif
+                                <div class="relative">
+                                    @if($user->profile_photo_path)
+                                        <img src="{{ asset('storage/' . $user->profile_photo_path) }}"
+                                             alt="{{ $user->name }}"
+                                             class="h-10 w-10 rounded-full object-cover">
+                                    @else
+                                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                                            {{ substr($user->name, 0, 1) }}
+                                        </div>
+                                    @endif
+                                    <!-- Status Online/Offline Icon -->
+                                    <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white {{ $user->is_online ? 'bg-green-500' : 'bg-gray-400' }}" title="{{ $user->is_online ? 'Online' : 'Offline' }}"></div>
+                                </div>
 
                                 <div class="flex-1 min-w-0">
                                     <h3 class="font-medium text-gray-900 group-hover:text-blue-600 {{ $isUnread ? 'font-bold' : '' }}">{{ $user->name }}</h3>

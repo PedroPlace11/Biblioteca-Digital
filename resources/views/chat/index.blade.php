@@ -6,22 +6,26 @@
     <div class="w-80 bg-white border-r border-slate-200/80 flex flex-col shadow-sm">
         <!-- Header -->
         <div class="p-4 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-4">
+            @php
+                $pendingInvitations = auth()->user()->roomInvitationsReceived()
+                    ->where('status', 'pending')
+                    ->count();
+
+                $hasRoomRequestsNotice = auth()->user()->isAdmin()
+                    && isset($roomRequestsForAdmin)
+                    && $roomRequestsForAdmin->isNotEmpty();
+            @endphp
+
+            <div class="flex items-center justify-between {{ ($pendingInvitations > 0 || $hasRoomRequestsNotice) ? 'mb-4' : '' }}">
                 <h1 class="text-2xl font-bold text-gray-900">Chat</h1>
                 @if(auth()->user()->isAdmin())
-                    <a href="{{ route('chat.rooms.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-sm font-semibold transition shadow-sm shadow-blue-200/70">
+                    <a href="{{ route('chat.rooms.create') }}" class="bg-black hover:bg-slate-900 text-white px-3 py-2 rounded-xl text-sm font-semibold transition shadow-sm shadow-black/20">
                         + Sala
                     </a>
                 @endif
             </div>
 
             <!-- Notificações de convites -->
-            @php
-                $pendingInvitations = auth()->user()->roomInvitationsReceived()
-                    ->where('status', 'pending')
-                    ->count();
-            @endphp
-
             @if($pendingInvitations > 0)
                 <a href="{{ route('chat.invitations.index') }}" class="block w-full mb-3 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm hover:bg-yellow-100 transition">
                     📬 {{ $pendingInvitations }} convite{{ $pendingInvitations > 1 ? 's' : '' }} pendente{{ $pendingInvitations > 1 ? 's' : '' }}
@@ -108,6 +112,35 @@
                                             <p class="text-xs text-gray-500 truncate mt-1">{{ Str::limit($room->last_message->content, 30) }}</p>
                                         @endif
                                     </div>
+                                    @if($isMember)
+                                        @php
+                                            $roomNotificationMode = $room->pivot->notification_mode ?? 'all';
+                                            $roomNotificationLabel = $roomNotificationMode === 'mentions'
+                                                ? 'Só meu nome'
+                                                : ($roomNotificationMode === 'none' ? 'Nenhuma' : 'Todas');
+                                            $roomBellClass = $roomNotificationMode === 'none'
+                                                ? 'text-slate-400 border-slate-200 bg-white'
+                                                : ($roomNotificationMode === 'mentions'
+                                                    ? 'text-amber-600 border-amber-200 bg-amber-50'
+                                                    : 'text-sky-700 border-sky-200 bg-sky-50');
+                                        @endphp
+                                        <details class="relative shrink-0" onclick="event.stopPropagation()">
+                                            <summary class="list-none inline-flex items-center justify-center w-8 h-8 rounded-lg border transition cursor-pointer {{ $roomBellClass }}" title="Notificações desta sala: {{ $roomNotificationLabel }}">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-4 h-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9a6 6 0 1 0-12 0v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                                                </svg>
+                                            </summary>
+                                            <div class="absolute right-0 top-9 z-20 w-44 rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
+                                                <p class="px-2 pb-1 text-[10px] uppercase tracking-wide text-slate-500">Sininho da sala</p>
+                                                <form method="POST" action="{{ route('chat.rooms.notification-preference', $room) }}" class="space-y-1">
+                                                    @csrf
+                                                    <button type="submit" name="notification_mode" value="all" class="w-full rounded-md px-2 py-1.5 text-left text-xs {{ $roomNotificationMode === 'all' ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-slate-700 hover:bg-slate-50' }}">Todas</button>
+                                                    <button type="submit" name="notification_mode" value="mentions" class="w-full rounded-md px-2 py-1.5 text-left text-xs {{ $roomNotificationMode === 'mentions' ? 'bg-amber-50 text-amber-700 font-semibold' : 'text-slate-700 hover:bg-slate-50' }}">Só meu nome</button>
+                                                    <button type="submit" name="notification_mode" value="none" class="w-full rounded-md px-2 py-1.5 text-left text-xs {{ $roomNotificationMode === 'none' ? 'bg-slate-100 text-slate-700 font-semibold' : 'text-slate-700 hover:bg-slate-50' }}">Nenhuma</button>
+                                                </form>
+                                            </div>
+                                        </details>
+                                    @endif
                                     @if($room->is_archived)
                                         <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded shrink-0">Arquivada</span>
                                     @endif
@@ -186,15 +219,18 @@
                               class="block px-4 py-3 rounded-xl hover:bg-slate-50 transition group border {{ isset($selectedRecipient) && $selectedRecipient->id === $user->id ? 'bg-blue-50 border-blue-200 shadow-sm' : 'border-transparent' }}">
                         <div class="flex items-start justify-between">
                             <div class="flex-1 flex items-center space-x-3">
-                                @if($user->profile_photo_path)
-                                    <img src="{{ asset('storage/' . $user->profile_photo_path) }}"
-                                         alt="{{ $user->name }}"
-                                         class="h-10 w-10 rounded-full object-cover">
-                                @else
-                                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
-                                        {{ substr($user->name, 0, 1) }}
-                                    </div>
-                                @endif
+                                <div class="relative shrink-0">
+                                    @if($user->profile_photo_path)
+                                        <img src="{{ asset('storage/' . $user->profile_photo_path) }}"
+                                             alt="{{ $user->name }}"
+                                             class="h-10 w-10 rounded-full object-cover">
+                                    @else
+                                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                                            {{ substr($user->name, 0, 1) }}
+                                        </div>
+                                    @endif
+                                    <span class="absolute -bottom-0.5 -right-0.5 block h-3 w-3 rounded-full border-2 border-white shadow-sm {{ $user->is_online ? 'bg-green-500' : 'bg-gray-500' }}" title="{{ $user->is_online ? 'Online' : 'Offline' }}"></span>
+                                </div>
 
                                 <div class="flex-1 min-w-0">
                                     <h3 class="font-medium text-gray-900 group-hover:text-blue-600 {{ $isUnread ? 'font-bold' : '' }}">{{ $user->name }}</h3>
@@ -317,13 +353,17 @@
 
                                                     <div class="p-2.5 rounded-xl border {{ $isCurrentUser ? 'bg-gray-50 border-gray-100' : 'bg-white border-gray-100 hover:border-blue-200 hover:bg-blue-50/40' }} transition">
                                                         <div class="flex items-start gap-3">
-                                                            @if($member->profile_photo_path)
-                                                                <img src="{{ asset('storage/' . $member->profile_photo_path) }}" alt="{{ $member->name }}" class="h-9 w-9 rounded-full object-cover border border-gray-200 shadow-sm">
-                                                            @else
-                                                                <div class="h-9 w-9 rounded-full {{ $isRoomAdminMember ? 'bg-gradient-to-br from-red-400 to-red-600' : 'bg-gradient-to-br from-blue-400 to-blue-600' }} flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                                                                    {{ strtoupper(mb_substr($member->name, 0, 1)) }}
-                                                                </div>
-                                                            @endif
+                                                            <div class="relative">
+                                                                @if($member->profile_photo_path)
+                                                                    <img src="{{ asset('storage/' . $member->profile_photo_path) }}" alt="{{ $member->name }}" class="h-9 w-9 rounded-full object-cover border border-gray-200 shadow-sm">
+                                                                @else
+                                                                    <div class="h-9 w-9 rounded-full {{ $isRoomAdminMember ? 'bg-gradient-to-br from-red-400 to-red-600' : 'bg-gradient-to-br from-blue-400 to-blue-600' }} flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                                                        {{ strtoupper(mb_substr($member->name, 0, 1)) }}
+                                                                    </div>
+                                                                @endif
+                                                                <!-- Status Online/Offline Icon -->
+                                                                <div class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white {{ $member->is_online ? 'bg-green-500' : 'bg-gray-400' }}" title="{{ $member->is_online ? 'Online' : 'Offline' }}"></div>
+                                                            </div>
 
                                                             <div class="flex-1 min-w-0 text-left">
                                                                 <div class="flex items-center gap-2">

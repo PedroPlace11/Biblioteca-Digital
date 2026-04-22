@@ -38,7 +38,7 @@ class Room extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'room_users')
-            ->withPivot('joined_at', 'role')
+            ->withPivot('joined_at', 'role', 'notification_mode')
             ->withTimestamps();
     }
 
@@ -80,7 +80,11 @@ class Room extends Model
     public function addMember($userId, string $role = 'member')
     {
         if (!$this->hasMember($userId)) {
-            $this->users()->attach($userId, ['joined_at' => now(), 'role' => $role]);
+            $this->users()->attach($userId, [
+                'joined_at' => now(),
+                'role' => $role,
+                'notification_mode' => null,
+            ]);
         }
     }
 

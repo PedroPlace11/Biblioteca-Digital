@@ -202,7 +202,7 @@
                                         </span>
                                             <div class="min-w-0">
                                                 <p class="text-base font-bold tracking-[0.02em] text-slate-700">Notificações</p>
-                                                <p class="text-sm text-slate-500 leading-5">Confirmações de requisições</p>
+                                                <p class="text-sm text-slate-500 leading-5">Alertas de sistema</p>
                                             </div>
                                         </div>
                                         @if ($unreadNotificationsCount > 0)
@@ -255,10 +255,14 @@
                                                         $isEncomendaNotif = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'encomenda');
                                                         $isPagamentoNotif = isset($notification->data['title']) && str_contains(Str::lower($notification->data['title']), 'pagamento');
                                                         $isPedidoSala = isset($notification->data['title']) && (str_contains(Str::lower($notification->data['title']), 'pedido') || str_contains(Str::lower($notification->data['title']), 'entrar na sala'));
+                                                        $isRoomMessage = ($notification->data['type'] ?? null) === 'room_message';
+                                                        $isDirectMessage = ($notification->data['type'] ?? null) === 'direct_message';
                                                         $encomendaUrl = $notification->data['encomenda_url'] ?? null;
                                                         $reviewUrl = $notification->data['review_url'] ?? null;
                                                         $livroUrl = $notification->data['livro_url'] ?? null;
                                                         $carrinhoUrl = $notification->data['carrinho_url'] ?? null;
+                                                        $roomUrl = $notification->data['room_url'] ?? null;
+                                                        $directMessageUrl = $notification->data['direct_message_url'] ?? null;
                                                         $joinRequestId = $notification->data['join_request_id'] ?? null;
                                                         $roomId = $notification->data['room_id'] ?? null;
                                                         $destinoNotificacao = match (true) {
@@ -268,6 +272,8 @@
                                                             $isRecepcao && !empty($livroUrl) => $livroUrl,
                                                             $isLivroDisponivel && !empty($livroUrl) => $livroUrl,
                                                             $isCarrinhoNotif => route('carrinho.index'),
+                                                            $isDirectMessage && !empty($directMessageUrl) => $directMessageUrl,
+                                                            $isRoomMessage && !empty($roomUrl) => $roomUrl,
                                                             $isPedidoSala => route('chat.rooms.index'),
                                                             ($isEncomendaNotif || $isPagamentoNotif) && !empty($encomendaUrl) => $encomendaUrl,
                                                             ($isConfirmacao || $isDevolucao) && !empty($livroUrl) => $livroUrl,

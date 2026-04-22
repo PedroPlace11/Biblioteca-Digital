@@ -71,6 +71,23 @@ class NotificationController extends Controller
         // Volta para pagina anterior.
         return back();
     }
+
+    // Guarda preferência de notificações de mensagens de sala (tipo grupos).
+    public function updateChatRoomPreference(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'chat_room_notifications_mode' => 'required|in:all,mentions,none',
+        ]);
+
+        $user = Auth::user();
+        if ($user) {
+            $user->update([
+                'chat_room_notifications_mode' => $validated['chat_room_notifications_mode'],
+            ]);
+        }
+
+        return back();
+    }
 }
 
 
