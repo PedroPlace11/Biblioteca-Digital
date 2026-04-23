@@ -15,11 +15,18 @@ class MessageList extends Component
     public $lastMessageId = null;
     public ?int $editingMessageId = null;
     public string $editingContent = '';
+    public $searchQuery = '';
 
     public function mount()
     {
         $this->messages = collect();
         $this->loadMessages();
+    }
+
+    #[\Livewire\Attributes\On('search-updated')]
+    public function onSearchUpdated($searchQuery)
+    {
+        $this->searchQuery = $searchQuery;
     }
 
     public function loadMessages()
@@ -114,8 +121,24 @@ class MessageList extends Component
         $this->dispatch('message-updated', messageId: $message->id);
     }
 
+    public function getFilteredMessages()
+    {
+        $filtered = collect($this->messages);
+
+        if ($this->searchQuery) {
+            $query = strtolower($this->searchQuery);
+            $filtered = $filtered->filter(function($message) use ($query) {
+                return stripos($message->content, $query) !== false;
+            });
+        }
+
+        return $filtered->values();
+    }
+
     public function render()
     {
-        return view('livewire.chat.message-list');
+        return view('livewire.chat.message-list', [
+            'filteredMessages' => $this->getFilteredMessages(),
+        ]);
     }
 }

@@ -21,6 +21,8 @@ class DirectMessageChat extends Component
     public $newMessageCount = 0;
     public ?int $editingMessageId = null;
     public string $editingContent = '';
+    public $searchQuery = '';
+    public $searchOpen = false;
 
     protected $rules = [
         'content' => 'nullable|string|max:5000',
@@ -173,8 +175,44 @@ class DirectMessageChat extends Component
             ->update(['read_at' => now()]);
     }
 
+    public function searchMessages()
+    {
+        $filtered = collect($this->messages);
+
+        if ($this->searchQuery) {
+            $query = strtolower($this->searchQuery);
+            $filtered = $filtered->filter(function($message) use ($query) {
+                return stripos($message->content, $query) !== false;
+            });
+        }
+
+        return $filtered->values();
+    }
+
+    public function openSearch(): void
+    {
+        $this->searchOpen = true;
+    }
+
+    public function closeSearch(): void
+    {
+        $this->searchOpen = false;
+        $this->searchQuery = '';
+    }
+
+    public function toggleSearch(): void
+    {
+        $this->searchOpen = ! $this->searchOpen;
+
+        if (! $this->searchOpen) {
+            $this->searchQuery = '';
+        }
+    }
+
     public function render()
     {
-        return view('livewire.chat.direct-message-chat');
+        return view('livewire.chat.direct-message-chat', [
+            'filteredMessages' => $this->searchMessages()
+        ]);
     }
 }

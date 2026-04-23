@@ -1,5 +1,6 @@
 <div x-data="{
     emojiOpen: false,
+    searchOpen: @entangle('searchOpen').live,
     emojiGroups: {
         'Rostos': ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','🙂','😉','😍','😘','😗','😙','😚','😋','😜','🤪','🤨','🧐','🤓','😎','🥳','😤','😢','😭','😡','🤯','😱','😴','🤗','🤔','🫡','🤝'],
         'Gestos': ['👍','👎','👏','🙌','🙏','🤲','👌','✌️','🤞','🤟','🫶','👊','🤛','🤜','💪','🫡','👋','🙋','🙆','🙅','🤦','🤷','💁','🙇'],
@@ -16,9 +17,19 @@
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.focus();
     }
-}" class="max-w-3xl mx-auto w-full space-y-2">
-    <form wire:submit="sendMessage" class="space-y-2">
+}" class="max-w-3xl mx-auto w-full space-y-2 relative">
+    <form wire:submit="sendMessage" class="space-y-2 relative">
         <div class="group flex items-end gap-2 bg-white border border-slate-200 rounded-2xl p-2.5 shadow-sm shadow-slate-200/80 focus-within:border-blue-300 focus-within:shadow-md focus-within:shadow-blue-100 transition">
+            <!-- Botão de Busca -->
+                <button type="button"
+                    @click="searchOpen = !searchOpen"
+                    class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer transition"
+                    title="Buscar mensagens">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </button>
+
             <label class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer transition" title="Anexar arquivo">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828a4 4 0 00-5.656-5.656L5.757 10.757a6 6 0 108.486 8.486L20.5 13"/>
@@ -74,6 +85,27 @@
                 </svg>
             </button>
         </div>
+
+        <!-- Search Bar Overlay -->
+            <div x-show="searchOpen"
+                 x-cloak
+                 class="absolute bottom-full left-0 right-0 mb-2 flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-3 py-2 shadow-lg shadow-slate-300/50 focus-within:border-blue-300 focus-within:shadow-lg focus-within:shadow-blue-200 transition">
+                <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text"
+                       wire:model.live="searchQuery"
+                       placeholder="Buscar mensagens..."
+                       autofocus
+                       class="flex-1 bg-transparent px-2 py-1.5 text-sm text-slate-700 placeholder:text-slate-400 border-0 focus:outline-none focus:ring-0">
+                <button type="button"
+                        @click="searchOpen = false; $wire.set('searchQuery', '')"
+                        class="p-1 text-slate-400 hover:text-slate-600 rounded-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
 
         <!-- Preview de arquivo selecionado -->
         @if($file)

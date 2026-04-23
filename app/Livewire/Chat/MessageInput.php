@@ -17,6 +17,8 @@ class MessageInput extends Component
     public $content = '';
     public $file = null;
     public $isTyping = false;
+    public $searchOpen = false;
+    public $searchQuery = '';
 
     protected $rules = [
         'content' => 'nullable|string|max:5000',
@@ -88,6 +90,33 @@ class MessageInput extends Component
         $this->isTyping = strlen($this->content) > 0;
         // Pode disparar evento de "está a escrever"
         // $this->dispatch('user-typing', userId: Auth::id());
+    }
+
+    public function updatedSearchQuery($value)
+    {
+        $this->dispatch('search-updated', searchQuery: $value);
+    }
+
+    public function openSearch(): void
+    {
+        $this->searchOpen = true;
+    }
+
+    public function closeSearch(): void
+    {
+        $this->searchOpen = false;
+        $this->searchQuery = '';
+        $this->dispatch('search-updated', searchQuery: '');
+    }
+
+    public function toggleSearch(): void
+    {
+        $this->searchOpen = ! $this->searchOpen;
+
+        if (! $this->searchOpen) {
+            $this->searchQuery = '';
+            $this->dispatch('search-updated', searchQuery: '');
+        }
     }
 
     public function render()

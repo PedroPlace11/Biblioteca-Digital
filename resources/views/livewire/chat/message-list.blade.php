@@ -3,7 +3,7 @@
     class="h-full overflow-y-auto px-4 md:px-8 py-4"
     wire:poll.2s="loadMessages">
     <div class="max-w-3xl mx-auto">
-    @forelse($messages as $message)
+    @forelse($filteredMessages as $message)
         @php
             $isMine = auth()->id() === $message->user_id;
         @endphp

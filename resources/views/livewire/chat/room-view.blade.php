@@ -82,8 +82,11 @@
 </div>
 
 <!-- Messages Area -->
-<div class="flex-1 overflow-y-auto p-4 space-y-4">
-    @livewire('chat.message-list', ['room' => $room])
+<div class="flex flex-col flex-1 overflow-hidden">
+    <!-- Messages -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        @livewire('chat.message-list', ['room' => $room], key('message-list-' . $room->id))
+    </div>
 </div>
 
 <!-- Input Area -->
